@@ -9,9 +9,9 @@
       <ellipse class="ellipse-move ellipse4" cx="1200" cy="340" rx="160" ry="60" fill="#fff" fill-opacity="0.13"/>
     </svg>
     <h1 class="display-3 fw-bold mb-3 animate-slidein" style="position:relative;z-index:2;">Driv'n Cook</h1>
-    <p class="lead fs-4 animate-fadein-delay" style="position:relative;z-index:2;">Food trucks de qualité, frais et locaux</p>
+    <p class="lead fs-4 animate-fadein-delay" style="position:relative;z-index:2;" data-i18n="home.tagline">Food trucks de qualité, frais et locaux</p>
     <div class="mt-4 animate-fadein-delay2" style="position:relative;z-index:2;">
-      <a href="/register" class="btn btn-lg btn-light shadow" id="mainActionBtn">Créer un compte</a>
+      <a href="/register" class="btn btn-lg btn-light shadow" id="mainActionBtn" data-i18n="home.createAccount">Créer un compte</a>
     </div>
     <!-- Vague plus haute et épaisse -->
     <svg viewBox="0 0 1440 400" style="position:absolute; left:0; right:0; bottom:0; width:100%; height:200px; display:block; pointer-events:none;z-index:1;" preserveAspectRatio="none">
@@ -28,12 +28,13 @@
             <img src="/images/homepageFoodtruck.png" alt="Foodtruck" class="img-fluid rounded shadow-lg" style="max-width: 100%; background: #f8f8f8;" />
           </div>
           <div class="col-md-6 animate-fadein-delay">
-            <h2 class="fw-bold mb-3">Qu'est-ce que Driv'n Cook ?</h2>
-            <p class="fs-5">Driv'n Cook est un réseau de <b>food trucks</b> en franchise, proposant des plats à base de produits frais et locaux, avec une gestion centralisée des entrepôts et un suivi des performances franchisés.<br><br>
-            <b>Objectifs :</b> qualité, rapidité, et expérience client optimale.<br><br>
-            <span class="text-success">✔️</span> Ingrédients frais et locaux<br>
-            <span class="text-success">✔️</span> 4 entrepôts en Île-de-France<br>
-            <span class="text-success">✔️</span> Fidélité et commandes en ligne
+            <h2 class="fw-bold mb-3" data-i18n="home.whatIsTitle">Qu'est-ce que Driv'n Cook ?</h2>
+            <p class="fs-5">
+              <span data-i18n="home.whatIsDescription">Driv'n Cook est un réseau de <b>food trucks</b> en franchise, proposant des plats à base de produits frais et locaux, avec une gestion centralisée des entrepôts et un suivi des performances franchisés.</span><br><br>
+              <b data-i18n="home.objectives">Objectifs :</b> <span data-i18n="home.objectivesText">qualité, rapidité, et expérience client optimale.</span><br><br>
+              <span class="text-success">✔️</span> <span data-i18n="home.freshIngredients">Ingrédients frais et locaux</span><br>
+              <span class="text-success">✔️</span> <span data-i18n="home.warehouses">4 entrepôts en Île-de-France</span><br>
+              <span class="text-success">✔️</span> <span data-i18n="home.loyalty">Fidélité et commandes en ligne</span>
             </p>
           </div>
         </div>
@@ -43,14 +44,14 @@
     <!-- Services principaux -->
     <section class="services-section py-5 animate-fadein-delay2" style="background: #f8f8f8;">
       <div class="container-fluid">
-        <h2 class="text-center fw-bold mb-5">Nos services</h2>
+        <h2 class="text-center fw-bold mb-5" data-i18n="home.servicesTitle">Nos services</h2>
         <div class="row g-4">
           <div class="col-md-4 animate-slidein">
             <div class="card h-100 shadow service-card border-0">
               <div class="card-body text-center">
                 <i class="bi bi-basket2 display-4 text-success mb-3"></i>
-                <h5 class="card-title">Commandes</h5>
-                <p class="card-text">Commandez vos menus et retirez-les au food truck choisi.</p>
+                <h5 class="card-title" data-i18n="home.ordersTitle">Commandes</h5>
+                <p class="card-text" data-i18n="home.ordersDescription">Commandez vos menus et retirez-les au food truck choisi.</p>
               </div>
             </div>
           </div>
@@ -58,8 +59,8 @@
             <div class="card h-100 shadow service-card border-0">
               <div class="card-body text-center">
                 <i class="bi bi-geo-alt display-4 text-primary mb-3"></i>
-                <h5 class="card-title">Carte</h5>
-                <p class="card-text">Visualisez les food trucks actifs et nos entrepôts.</p>
+                <h5 class="card-title" data-i18n="home.mapTitle">Carte</h5>
+                <p class="card-text" data-i18n="home.mapDescription">Visualisez les food trucks actifs et nos entrepôts.</p>
               </div>
             </div>
           </div>
@@ -67,8 +68,8 @@
             <div class="card h-100 shadow service-card border-0">
               <div class="card-body text-center">
                 <i class="bi bi-people-fill display-4 text-warning mb-3"></i>
-                <h5 class="card-title">Fidélité</h5>
-                <p class="card-text">Cumulez des points et débloquez des menus offerts.</p>
+                <h5 class="card-title" data-i18n="home.loyaltyTitle">Fidélité</h5>
+                <p class="card-text" data-i18n="home.loyaltyDescription">Cumulez des points et débloquez des menus offerts.</p>
               </div>
             </div>
           </div>
@@ -79,27 +80,27 @@
     <!-- Pourquoi Driv'n Cook ? -->
     <section class="py-5 animate-fadein">
       <div class="container-fluid">
-        <h2 class="text-center fw-bold mb-4">Pourquoi choisir Driv'n Cook ?</h2>
+        <h2 class="text-center fw-bold mb-4" data-i18n="home.whyChooseTitle">Pourquoi choisir Driv'n Cook ?</h2>
         <div class="row g-4 justify-content-center">
           <div class="col-md-3 animate-slidein">
             <div class="advantage-box text-center p-4 rounded shadow-sm bg-white">
               <i class="bi bi-leaf display-5 text-success mb-2"></i>
-              <h6 class="fw-bold">Écologique</h6>
-              <p class="mb-0">Réduction de l'empreinte carbone grâce à l'optimisation des trajets et à la mutualisation des livraisons.</p>
+              <h6 class="fw-bold" data-i18n="home.ecoTitle">Écologique</h6>
+              <p class="mb-0" data-i18n="home.ecoDescription">Réduction de l'empreinte carbone grâce à l'optimisation des trajets et à la mutualisation des livraisons.</p>
             </div>
           </div>
           <div class="col-md-3 animate-slidein-delay">
             <div class="advantage-box text-center p-4 rounded shadow-sm bg-white">
               <i class="bi bi-currency-euro display-5 text-primary mb-2"></i>
-              <h6 class="fw-bold">Économique</h6>
-              <p class="mb-0">Favorise le pouvoir d'achat, permet de rentabiliser ses trajets et de faire des économies sur les livraisons.</p>
+              <h6 class="fw-bold" data-i18n="home.economicTitle">Économique</h6>
+              <p class="mb-0" data-i18n="home.economicDescription">Favorise le pouvoir d'achat, permet de rentabiliser ses trajets et de faire des économies sur les livraisons.</p>
             </div>
           </div>
           <div class="col-md-3 animate-slidein-delay2">
             <div class="advantage-box text-center p-4 rounded shadow-sm bg-white">
               <i class="bi bi-people display-5 text-warning mb-2"></i>
-              <h6 class="fw-bold">Solidaire</h6>
-              <p class="mb-0">Lutte contre l'isolement, favorise l'entraide et la création de liens entre particuliers et commerçants.</p>
+              <h6 class="fw-bold" data-i18n="home.solidarityTitle">Solidaire</h6>
+              <p class="mb-0" data-i18n="home.solidarityDescription">Lutte contre l'isolement, favorise l'entraide et la création de liens entre particuliers et commerçants.</p>
             </div>
           </div>
         </div>
@@ -108,9 +109,8 @@
 
     <!-- Section Annonces supprimée -->
 
-
     <section class="mb-5 animate-fadein">
-      <h2 class="mb-3">🗣️ Avis vérifiés</h2>
+      <h2 class="mb-3" data-i18n="home.reviewsTitle">🗣️ Avis vérifiés</h2>
       <div id="customAvisSlider" class="custom-slider">
         <button class="slider-arrow left" id="avisPrevBtn"><i class="bi bi-chevron-left"></i></button>
         <div class="slider-track" id="avisTrack"></div>
@@ -162,7 +162,7 @@
           if (data.user) {
             // Utilisateur connecté : changer le bouton en "Commander un menu"
             const mainActionBtn = document.getElementById('mainActionBtn');
-            mainActionBtn.textContent = 'Commander un menu';
+            mainActionBtn.textContent = t('home.orderMenu');
             mainActionBtn.href = '/menu';
             mainActionBtn.classList.remove('btn-light');
             mainActionBtn.classList.add('btn-success');

@@ -4,7 +4,7 @@
       <img src="/images/navbar_logo.png" alt="Driv'n Cook" style="height:42px; width:auto; border-radius:0.5rem; box-shadow:0 2px 8px rgba(194, 255, 177, 0.08); background:#ffffff09; padding:2px;">
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
+      <span class="navbar-togg-icon"></span>
     </button>
     <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
       <ul class="navbar-nav ms-auto text-center" id="navbarLinks">
@@ -18,33 +18,137 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content p-4 animate-fadein">
       <div class="modal-header border-0">
-        <h2 class="modal-title w-100 text-center text-white" id="loginModalLabel">Connexion</h2>
+        <h2 class="modal-title w-100 text-center text-white" id="loginModalLabel" data-i18n="login.title">Connexion</h2>
       </div>
       <div class="modal-body">
         <form id="loginForm">
           <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
+            <label for="email" class="form-label" data-i18n="login.email">Email</label>
             <input type="email" class="form-control" id="email" name="email" required>
           </div>
           <div class="mb-3">
-            <label for="password" class="form-label">Mot de passe</label>
+            <label for="password" class="form-label" data-i18n="login.password">Mot de passe</label>
             <input type="password" class="form-control" id="password" name="password" required>
           </div>
-          <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+          <button type="submit" class="btn btn-primary w-100" data-i18n="login.submit">Se connecter</button>
         </form>
         <div class="mt-3 text-center">
-          <a href="/register" class="text-white-50">Pas encore de compte ? S'inscrire</a>
+          <a href="/register" class="text-white-50" data-i18n="login.noAccount">Pas encore de compte ? S'inscrire</a>
         </div>
       </div>
     </div>
   </div>
 </div>
 <script>
+// Système de traduction
+const translations = {
+  fr: {
+    'nav.menu': 'Menu',
+    'nav.map': 'Carte',
+    'nav.myOrders': 'Mes commandes',
+    'nav.myFranchiseeOrders': 'Mes ordres',
+    'nav.myTruck': 'Mon camion',
+    'nav.myAccount': 'Mon Compte',
+    'nav.logout': 'Se déconnecter',
+    'nav.login': 'Se connecter',
+    'nav.register': 'S\'inscrire',
+    'login.title': 'Connexion',
+    'login.email': 'Email',
+    'login.password': 'Mot de passe',
+    'login.submit': 'Se connecter',
+    'login.noAccount': 'Pas encore de compte ? S\'inscrire',
+    'home.tagline': 'Food trucks de qualité, frais et locaux',
+    'home.createAccount': 'Créer un compte',
+    'home.orderMenu': 'Commander un menu',
+    'home.whatIsTitle': 'Qu\'est-ce que Driv\'n Cook ?',
+    'home.whatIsDescription': 'Driv\'n Cook est un réseau de food trucks en franchise, proposant des plats à base de produits frais et locaux, avec une gestion centralisée des entrepôts et un suivi des performances franchisés.',
+    'home.objectives': 'Objectifs :',
+    'home.objectivesText': 'qualité, rapidité, et expérience client optimale.',
+    'home.freshIngredients': 'Ingrédients frais et locaux',
+    'home.warehouses': '4 entrepôts en Île-de-France',
+    'home.loyalty': 'Fidélité et commandes en ligne',
+    'home.servicesTitle': 'Nos services',
+    'home.ordersTitle': 'Commandes',
+    'home.ordersDescription': 'Commandez vos menus et retirez-les au food truck choisi.',
+    'home.mapTitle': 'Carte',
+    'home.mapDescription': 'Visualisez les food trucks actifs et nos entrepôts.',
+    'home.loyaltyTitle': 'Fidélité',
+    'home.loyaltyDescription': 'Cumulez des points et débloquez des menus offerts.',
+    'home.whyChooseTitle': 'Pourquoi choisir Driv\'n Cook ?',
+    'home.ecoTitle': 'Écologique',
+    'home.ecoDescription': 'Réduction de l\'empreinte carbone grâce à l\'optimisation des trajets et à la mutualisation des livraisons.',
+    'home.economicTitle': 'Économique',
+    'home.economicDescription': 'Favorise le pouvoir d\'achat, permet de rentabiliser ses trajets et de faire des économies sur les livraisons.',
+    'home.solidarityTitle': 'Solidaire',
+    'home.solidarityDescription': 'Lutte contre l\'isolement, favorise l\'entraide et la création de liens entre particuliers et commerçants.',
+    'home.reviewsTitle': '🗣️ Avis vérifiés'
+  },
+  en: {
+    'nav.menu': 'Menu',
+    'nav.map': 'Map',
+    'nav.myOrders': 'My Orders',
+    'nav.myFranchiseeOrders': 'My Franchisee Orders',
+    'nav.myTruck': 'My Truck',
+    'nav.myAccount': 'My Account',
+    'nav.logout': 'Logout',
+    'nav.login': 'Login',
+    'nav.register': 'Register',
+    'login.title': 'Login',
+    'login.email': 'Email',
+    'login.password': 'Password',
+    'login.submit': 'Login',
+    'login.noAccount': 'No account yet? Register',
+    'home.tagline': 'Quality, fresh and local food trucks',
+    'home.createAccount': 'Create account',
+    'home.orderMenu': 'Order a menu',
+    'home.whatIsTitle': 'What is Driv\'n Cook?',
+    'home.whatIsDescription': 'Driv\'n Cook is a franchise food truck network, offering dishes made from fresh and local products, with centralized warehouse management and franchisee performance tracking.',
+    'home.objectives': 'Objectives:',
+    'home.objectivesText': 'quality, speed, and optimal customer experience.',
+    'home.freshIngredients': 'Fresh and local ingredients',
+    'home.warehouses': '4 warehouses in Île-de-France',
+    'home.loyalty': 'Loyalty and online orders',
+    'home.servicesTitle': 'Our services',
+    'home.ordersTitle': 'Orders',
+    'home.ordersDescription': 'Order your menus and pick them up at the chosen food truck.',
+    'home.mapTitle': 'Map',
+    'home.mapDescription': 'View active food trucks and our warehouses.',
+    'home.loyaltyTitle': 'Loyalty',
+    'home.loyaltyDescription': 'Earn points and unlock free menus.',
+    'home.whyChooseTitle': 'Why choose Driv\'n Cook?',
+    'home.ecoTitle': 'Ecological',
+    'home.ecoDescription': 'Reduction of carbon footprint through route optimization and delivery pooling.',
+    'home.economicTitle': 'Economic',
+    'home.economicDescription': 'Promotes purchasing power, allows to make trips profitable and save on deliveries.',
+    'home.solidarityTitle': 'Solidarity',
+    'home.solidarityDescription': 'Fights against isolation, promotes mutual aid and creates links between individuals and merchants.',
+    'home.reviewsTitle': '🗣️ Verified reviews'
+  }
+};
+
+function t(key) {
+  const lang = localStorage.getItem('lang') || 'fr';
+  return translations[lang][key] || key;
+}
+
+function updatePageLanguage() {
+  // Mettre à jour tous les éléments avec data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    element.textContent = t(key);
+  });
+  
+  // Mettre à jour le drapeau de la langue
+  const lang = localStorage.getItem('lang') || 'fr';
+  const label = document.getElementById('langLabel');
+  if (label) label.textContent = lang === 'en' ? '🇬🇧' : '🇫🇷';
+}
+
 function updateNavbar() {
   const links = document.getElementById('navbarLinks');
   links.innerHTML = '';
-  links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/menu">Menu</a></li>';
-  links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/carte">Carte</a></li>';
+  links.innerHTML += `<li class="nav-item"><a class="nav-link" href="/menu">${t('nav.menu')}</a></li>`;
+  links.innerHTML += `<li class="nav-item"><a class="nav-link" href="/carte">${t('nav.map')}</a></li>`;
   links.innerHTML += `
     <li class="nav-item dropdown">
       <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -62,54 +166,53 @@ function updateNavbar() {
   })
   .then(res => res.json())
   .then(data => {
-    console.log('Utilisateur connecté :', data); // 🔍 AJOUTE ÇA
+    console.log('Utilisateur connecté :', data);
     if (data.user) {
-      links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/mes-commandes">Mes commandes</a></li>';
+      links.innerHTML += `<li class="nav-item"><a class="nav-link" href="/mes-commandes">${t('nav.myOrders')}</a></li>`;
       if (data.user.role === 'franchisé') {
-        links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/mes-ordres">Mes ordres</a></li>';
+        links.innerHTML += `<li class="nav-item"><a class="nav-link" href="/mes-ordres">${t('nav.myFranchiseeOrders')}</a></li>`;
       }
       if (data.user.role === 'franchisé') {
-        links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/mon-camion">Mon camion</a></li>';
+        links.innerHTML += `<li class="nav-item"><a class="nav-link" href="/mon-camion">${t('nav.myTruck')}</a></li>`;
       }
-      links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/account">Mon Compte</a></li>';
-      links.innerHTML += '<li class="nav-item"><a class="nav-link" href="#" id="logoutBtn">Se déconnecter</a></li>';
+      links.innerHTML += `<li class="nav-item"><a class="nav-link" href="/account">${t('nav.myAccount')}</a></li>`;
+      links.innerHTML += `<li class="nav-item"><a class="nav-link" href="#" id="logoutBtn">${t('nav.logout')}</a></li>`;
     } else {
-      links.innerHTML += '<li class="nav-item"><a class="nav-link" href="#" id="openLoginModal">Se connecter</a></li>';
+      links.innerHTML += `<li class="nav-item"><a class="nav-link" href="#" id="openLoginModal">${t('nav.login')}</a></li>`;
     }
-    // Set current lang flag
-    const lang = localStorage.getItem('lang') || 'fr';
-    const label = document.getElementById('langLabel');
-    if (label) label.textContent = lang === 'en' ? '🇬🇧' : '🇫🇷';
+    updatePageLanguage();
   })
   .catch(err => {
     console.error('Erreur lors de la vérification de l\'authentification:', err);
-    links.innerHTML += '<li class="nav-item"><a class="nav-link" href="#" id="openLoginModal">Se connecter</a></li>';
-    links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/register">S\'inscrire</a></li>';
+    links.innerHTML += `<li class="nav-item"><a class="nav-link" href="#" id="openLoginModal">${t('nav.login')}</a></li>`;
+    links.innerHTML += `<li class="nav-item"><a class="nav-link" href="/register">${t('nav.register')}</a></li>`;
+    updatePageLanguage();
   });
 }
-
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', updateNavbar);
 } else {
   updateNavbar();
 }
+
 document.addEventListener('click', function(e) {
   if (e.target && e.target.id === 'logoutBtn') {
     fetch('https://api.axia.quest/api/auth/logout', {
       method: 'POST',
       credentials: 'include'
     }).then(() => {
-      updateNavbar();  // Met à jour la navbar après la déconnexion
+      updateNavbar();
       window.location.href = '/';
     });
   }
-  // Lang selector (stub)
+  // Sélecteur de langue fonctionnel
   if (e.target && e.target.matches('[data-lang]')) {
     e.preventDefault();
     const lang = e.target.getAttribute('data-lang');
     localStorage.setItem('lang', lang);
-    location.reload();
+    updatePageLanguage();
+    updateNavbar();
   }
   if (e.target && e.target.id === 'openLoginModal') {
     const modal = new bootstrap.Modal(document.getElementById('loginModal'));
@@ -117,6 +220,5 @@ document.addEventListener('click', function(e) {
     document.body.classList.add('modal-open');
   }
 });
-
 </script>
   
