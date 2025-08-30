@@ -393,24 +393,6 @@ if (document.getElementById('loginForm')) {
   });
 }
 
-// Vérification d'authentification pour les pages protégées
-if (window.location.pathname === '/mes-annonces') {
-  fetch('https://api.axia.quest/api/auth/me', {
-    credentials: 'include'
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.user) {
-        window.location.href = '/';
-        return;
-      }
-    })
-    .catch(err => {
-      console.error('Erreur vérification authentification:', err);
-      window.location.href = '/';
-  });
-}
-
 // Affichage du compte et gestion "devenir livreur" - DÉSACTIVÉ car géré dans account.ejs
 // if (window.location.pathname === '/account') {
 //   // Code désactivé pour éviter le conflit avec account.ejs

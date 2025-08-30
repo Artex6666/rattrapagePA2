@@ -70,7 +70,12 @@
       </div>
       <div id="balanceSection" class="card shadow-sm p-3 mt-4" style="display: none;">
         <h5>Mon solde et retraits</h5>
-        <div id="balanceInfo"></div>
+        <div id="balanceInfo" class="mb-2"></div>
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <span id="availableBadge" class="badge bg-success fs-6"></span>
+          <span id="pendingBadge" class="badge bg-warning text-dark fs-6"></span>
+          <a id="downloadPayoutsPdf" href="#" class="btn btn-sm btn-outline-secondary ms-auto">Télécharger l'historique (PDF)</a>
+        </div>
         <form id="payoutForm" class="row g-2 mt-2">
           <div class="col-md-6"><input type="text" class="form-control" name="iban" placeholder="IBAN" required></div>
           <div class="col-md-4"><input type="number" min="1" class="form-control" name="amount" placeholder="Montant (€)" required></div>
@@ -211,6 +216,16 @@ async function loadPayouts() {
   const list = document.getElementById('payoutHistory');
   if (!res.ok) { list.innerHTML = '<li class="list-group-item">-</li>'; return; }
   const rows = await res.json();
+  // Badges: disponible (vert) et en attente (jaune)
+  const meRes = await fetch('https://api.axia.quest/api/auth/me', { credentials: 'include' });
+  const me = await meRes.json();
+  const balanceCents = me.user?.balance_cents || 0;
+  const pendingCents = rows.filter(p=>p.status==='requested').reduce((s,p)=>s+p.amount_cents,0);
+  const availableCents = Math.max(0, balanceCents - pendingCents);
+  const avail = document.getElementById('availableBadge');
+  const pend = document.getElementById('pendingBadge');
+  if (avail) avail.textContent = `Disponible: € ${(availableCents/100).toFixed(2)}`;
+  if (pend) pend.textContent = `En attente: -€ ${(pendingCents/100).toFixed(2)}`;
   list.innerHTML = rows.map(p=>`<li class="list-group-item d-flex justify-content-between"><span>${p.iban}</span><span>${(p.amount_cents/100).toFixed(2)}€</span><span>${p.status}</span></li>`).join('');
 }
 
@@ -305,8 +320,21 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       const res = await fetch('https://api.axia.quest/api/payouts/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ iban, amount_cents }) });
       const out = await res.json();
       document.getElementById('payoutMsg').innerText = res.ok ? out.message : (out.error||'Erreur');
+      if (!res.ok) {
+        document.getElementById('payoutMsg').className = 'alert alert-danger mt-2';
+      } else {
+        document.getElementById('payoutMsg').className = 'alert alert-success mt-2';
+      }
       await loadMe();
       await loadPayouts();
+    });
+  }
+  // Bouton téléchargement PDF historique
+  const pdfBtn = document.getElementById('downloadPayoutsPdf');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      window.open('https://api.axia.quest/api/payouts/me/pdf', '_blank');
     });
   }
 

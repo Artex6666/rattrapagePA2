@@ -45,7 +45,43 @@ router.put('/:id/status', ensureAuth, async (req, res) => {
         await run('UPDATE users SET balance_cents = balance_cents + ? WHERE id = ?', [amountFranchisee, franchiseeId]);
       }
     }
-    // TODO: envoyer un mail lorsque le statut passe à ready
+    // Envoyer un mail lorsque le statut passe à ready
+    if (next === 'ready') {
+      try {
+        const { sendMail } = require('../utils/mailer');
+        const client = await get('SELECT email, first_name, last_name FROM users WHERE id = ?', [o.user_id]);
+        if (client && client.email) {
+          const items = JSON.parse(o.items_json || '[]');
+          const itemsList = items.map(item => `${item.qty} × ${item.name}`).join(', ');
+          
+          await sendMail({
+            to: client.email,
+            subject: 'Votre commande est prête ! 🎉',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #27ae60; text-align: center;">Votre commande est prête ! 🎉</h2>
+                <p>Bonjour ${client.first_name || 'Client'},</p>
+                <p>Votre commande <strong>#${o.id}</strong> est maintenant prête et peut être retirée au food truck.</p>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #495057;">Détails de votre commande :</h3>
+                  <p><strong>Articles :</strong> ${itemsList}</p>
+                  <p><strong>Total :</strong> ${(o.total_cents / 100).toFixed(2)}€</p>
+                  <p><strong>Statut :</strong> <span style="color: #28a745; font-weight: bold;">Prête à être retirée</span></p>
+                </div>
+                
+                <p>Rendez-vous au food truck pour récupérer votre commande !</p>
+                <p style="color: #6c757d; font-size: 14px;">Merci de votre confiance,<br>L'équipe Driv'n Cook</p>
+              </div>
+            `
+          });
+        }
+      } catch (emailError) {
+        console.error('Erreur lors de l\'envoi de l\'email de notification:', emailError);
+        // Ne pas bloquer la mise à jour du statut si l'email échoue
+      }
+    }
+    
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
