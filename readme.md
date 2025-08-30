@@ -1,190 +1,232 @@
-CAHIER DES CHARGES - DRIV'N COOK
-Missions 1 & 2 - Système d'Information
-1. CONTEXTE ET OBJECTIFS
-Contexte :
-Driv'n Cook est une entreprise de food trucks basée à Paris (12ème arrondissement) qui propose des plats de qualité à base de produits frais et locaux. L'entreprise fonctionne en franchise et souhaite moderniser son système d'information.
-Objectifs :
-Gérer les franchisés et leurs activités
-Améliorer l'expérience client
-Automatiser les processus de gestion
-2. ARCHITECTURE TECHNIQUE
-Stack Technologique :
-Front Office (Port 4000) : EJS + MVC Architecture
-Back Office (Port 5000) : 
-API (Port 3000) : Express.js + Node.js
-Base de données : SQLITE 
-Documentation API : Swagger
-Architecture :
-Architecture MVC (Model-View-Controller)
-API RESTful
-Séparation claire des responsabilités
-Communication inter-services via HTTP
-3. MISSION 1 : GESTION DES SERVICES FRANCHISÉS
-3.1 Back-Office Driv'n Cook (Port 5000 - VueJS)
-Gestion des Franchisés :
-Enregistrement des nouveaux franchisés
-Visualisation des informations personnelles et professionnelles
-Suivi des documents fournis (preuve de virement, fichier PDF)
-Gestion des franchisés
-Tableau de bord des franchisés
-Gestion du Parc de Camions :
-Attribution des camions aux franchisés
-Gestion des emplacements et déploiements
-Suivi des pannes et maintenance
-Carnet d'entretien des véhicules
-Historique des interventions
-Gestion des Entrepôts :
-Suivi des stocks (80% obligatoire vs 20% libre)
-Gestion des commandes d'approvisionnement
-Contrôle des fournitures
-Interface de gestion des 4 entrepôts d'Île-de-France
-Gestion Financière :
-Suivi des 4% du chiffre d'affaires
-Historique des ventes par franchisé
-Génération automatique de rapports PDF
-Tableaux de bord financiers
-3.2 Front-Office Franchisés (Port 4000 - EJS)
-Espace Personnel :
-Connexion sécurisée
-Gestion du profil personnel
-Tableau de bord des performances
-Historique des ventes
-Gestion des Commandes :
-Interface de commande des stocks
-Suivi des commandes en cours
-Historique des approvisionnements
-Respect du ratio 80/20
-Gestion des Camions :
-Consultation du carnet d'entretien
-Signalement de pannes
-Demande de maintenance
-Suivi des interventions
-Rapports et Statistiques :
-Consultation des chiffres de vente
-Téléchargement des rapports PDF
-Analyses de performance
-4. MISSION 2 : GESTION DES SERVICES CLIENTS
-4.1 Front-Office Clients (Port 4000 - EJS)
-Gestion des Menus :
-Consultation des plats disponibles
-Interface multilingue (français + anglais minimum)
-Photos et descriptions des plats
-Filtres par catégories et préférences
-Système de Commandes :
-Panier d'achat en ligne
-Réservation à l'avance
-Simulation de paiement
-Confirmation de commande
-Suivi du statut de la commande
-Gestion des Comptes Clients :
-Inscription et connexion
-Profil personnel
-Historique des commandes
-Préférences alimentaires
-4.2 Gestion des Cartes de Fidélité (Java)
-Fonctionnalités :
-Génération de cartes numériques imprimables
-Système de points et récompenses
-Réductions automatiques
-Invitations aux dégustations
-Prix réduits sur produits spéciaux
-Interface de Gestion :
-Dashboard des avantages
-Historique des gains
-Consultation des offres disponibles
-4.3 Gestion des Événements
-Types d'Événements :
-Dégustations
-Ventes de produits spéciaux
-Événements promotionnels
-Inscriptions et gestion des participants
-Newsletter Mensuelle :
-Envoi automatique des avantages
-Personnalisation selon le profil client
-Gestion des préférences de communication
-5. FONCTIONNALITÉS TRANSVERSALES
-5.1 Sécurité
-Authentification JWT
-Gestion des rôles et permissions
-Chiffrement des données sensibles
-Protection CSRF et XSS
-5.2 Gestion des Erreurs
-Codes d'erreur HTTP appropriés
-Pages d'erreur personnalisées
-Logs d'erreurs détaillés
-Gestion des exceptions
-5.3 Performance
-Mise en cache des données
-Optimisation des requêtes
-Compression des réponses
-Monitoring des performances
-6. SPÉCIFICATIONS TECHNIQUES
-6.1 Configuration Serveur
-Réécriture d'URL (URL rewriting)
-Gestion des codes d'erreur
-Configuration HTTPS
-Optimisation serveur web
-6.2 Base de Données
-Schéma normalisé
-Indexation optimisée
-Sauvegarde automatique
-Gestion des transactions
-6.3 API REST
-Endpoints documentés avec Swagger
-Validation des données
-Gestion des versions
-Rate limiting
-7. LIVRABLES ATTENDUS
-7.1 Code Source
-Application Front-Office (EJS)
-Application Back-Office (VueJS )
-API Express.js
-Scripts de déploiement
-7.2 Documentation
-Documentation technique complète
-Guide d'utilisation
-Guide de déploiement
-Documentation API Swagger
-7.3 Tests
-Tests unitaires
-Tests d'intégration
-Tests de charge
-Tests de sécurité
-8. CONTRAINTES ET EXIGENCES
-8.1 Contraintes Techniques
-Respect de l'architecture MVC
-Utilisation des ports spécifiés
-Mise en place de Swagger
-8.2 Contraintes Fonctionnelles
-Gestion multilingue obligatoire
-Génération automatique de rapports PDF
-Contrôle du ratio 80/20 pour les stocks
-Système de fidélité en Java
-8.3 Contraintes de Performance
-Temps de réponse < 2 secondes
-Disponibilité 99.9%
-Support de 1000 utilisateurs simultanés
-9. PLAN DE DÉVELOPPEMENT
-9.1 Phase 1 : Infrastructure
-Configuration des serveurs
-Mise en place de l'architecture
-Configuration des bases de données
-9.2 Phase 2 : API et Backend
-Développement de l'API Express.js
-Intégration de Swagger
-9.3 Phase 3 : Frontend
-Développement du Front-Office (EJS)
-Développement du Back-Office (VueJS)
-Intégration des composants
-9.4 Phase 4 : Tests et Déploiement
-Tests complets
-Optimisation des performances
-Déploiement en production
-10. CRITÈRES DE VALIDATION
-Respect de l'architecture MVC
-Fonctionnement sur les ports spécifiés
-Documentation Swagger fonctionnelle
-Tests automatisés passants
-Performance conforme aux exigences
-Sécurité validée
-Interface multilingue opérationnelle
+# Driv'n Cook 🚚🍔
+
+**Projet Annuel - 2A2**  
+**Loris RAMEAU & Thomas GALLOIS**
+
+Application de gestion de food trucks avec système de commandes en ligne, gestion des franchisés et back-office administratif.
+
+## 🏗️ Architecture
+
+Le projet est divisé en 3 composants principaux :
+
+- **API** (Port 3000) : Backend Node.js/Express avec base SQLite
+- **Front-Office** (Port 4000) : Interface client EJS + Bootstrap
+- **Back-Office** (Port 5000) : Administration Vue.js
+
+## 🚀 Installation
+
+### Prérequis
+- Node.js 18+ 
+- npm ou yarn
+
+### 1. Installation des dépendances
+
+```bash
+# API
+cd api
+npm install
+
+# Front-Office  
+cd ../mpa-frontoffice
+npm install
+
+# Back-Office
+cd ../spa-backoffice
+npm install
+```
+
+### 2. Configuration des variables d'environnement
+
+Créer un fichier `.env` à la racine du projet :
+
+```env
+# API
+API_PORT=3000
+FRONT_PORT=4000
+BACK_PORT=5000
+
+# Base de données
+DATABASE_URL=./db.sqlite
+
+# JWT
+JWT_SECRET=your-secret-key
+
+# Admin par défaut
+ADMIN_EMAIL=admin@admin.com
+ADMIN_PASSWORD=admin123
+
+# SMTP (optionnel)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+```
+
+### 3. Lancement du projet
+
+```bash
+# Lancer tous les services
+npm run dev
+```
+
+Cette commande démarre :
+- API sur http://localhost:3000
+- Front-Office sur http://localhost:4000  
+- Back-Office sur http://localhost:5000
+
+## 🔧 Développement
+
+### Ports par défaut
+- **API** : 3000 (http://localhost:3000)
+- **Front-Office** : 4000 (http://localhost:4000)
+- **Back-Office** : 5000 (http://localhost:5000)
+
+### Variables d'environnement
+
+#### Développement
+```env
+NODE_ENV=development
+API_PORT=3000
+FRONT_PORT=4000
+BACK_PORT=5000
+```
+
+#### Production  
+```env
+NODE_ENV=production
+API_PORT=80
+FRONT_PORT=443
+BACK_PORT=8080
+# Ajouter HTTPS, domaines, etc.
+```
+
+### Scripts disponibles
+
+```bash
+# API
+cd api
+npm run dev      # Démarrage avec nodemon
+npm start        # Démarrage production
+
+# Front-Office
+cd mpa-frontoffice  
+npm run dev      # Démarrage avec nodemon
+npm start        # Démarrage production
+
+# Back-Office
+cd spa-backoffice
+npm run dev      # Démarrage avec Vite
+npm run build    # Build production
+npm run preview  # Prévisualisation build
+```
+
+## 📁 Structure du projet
+
+```
+projetAnnuel/
+├── api/                    # Backend API (Port 3000)
+│   ├── src/
+│   │   ├── routes/        # Routes API
+│   │   ├── controllers/   # Contrôleurs
+│   │   ├── services/      # Logique métier
+│   │   ├── utils/         # Utilitaires (DB, auth, mailer)
+│   │   └── server.js      # Point d'entrée
+│   ├── db.sqlite          # Base de données
+│   └── package.json
+├── mpa-frontoffice/        # Front-Office EJS (Port 4000)
+│   ├── views/             # Templates EJS
+│   ├── public/            # Assets statiques
+│   ├── routes/            # Routes front-office
+│   └── package.json
+├── spa-backoffice/         # Back-Office Vue.js (Port 5000)
+│   ├── src/
+│   │   ├── components/    # Composants Vue
+│   │   ├── views/         # Pages
+│   │   └── App.vue        # Composant racine
+│   └── package.json
+└── README.md
+```
+
+## 🗄️ Base de données
+
+- **SQLite** avec schéma automatique
+- Tables : users, trucks, orders, payouts, franchises, etc.
+- Migrations automatiques au démarrage
+- Données de test incluses
+
+## 🔐 Authentification
+
+- **JWT** pour les sessions
+- Rôles : client, franchisé, ADMIN
+- Middleware `ensureAuth` et `ensureRole`
+- Protection CSRF et XSS
+
+## 🌐 Fonctionnalités
+
+### Front-Office
+- Menu avec images et descriptions
+- Système de commandes avec panier
+- Carte interactive des food trucks
+- Système de fidélité et points
+- Interface multilingue (FR/EN/ES)
+
+### Back-Office  
+- Gestion des franchisés
+- Gestion des camions et entrepôts
+- Suivi des commandes et retraits
+- Tableaux de bord et statistiques
+- Export PDF des rapports
+
+### API
+- Endpoints RESTful documentés
+- Swagger UI sur `/api/docs`
+- Validation des données
+- Gestion des erreurs
+- Rate limiting
+
+## 📚 Documentation API
+
+- **Swagger UI** : http://localhost:3000/api/docs
+- Endpoints documentés avec exemples
+- Schémas de requêtes/réponses
+- Tests interactifs
+
+## 🧪 Tests
+
+```bash
+# Tests unitaires
+npm test
+
+# Tests d'intégration  
+npm run test:integration
+
+# Tests de charge
+npm run test:load
+```
+
+## 🚀 Déploiement
+
+### Développement
+```bash
+npm run dev
+```
+
+### Production
+```bash
+# Build des assets
+cd spa-backoffice && npm run build
+
+# Démarrage des services
+npm start
+```
+
+Ce projet est développé dans le cadre du projet annuel 2A2.
+
+## 👥 Auteurs
+
+- **Loris RAMEAU** - Développement Front-Office & API
+- **Thomas GALLOIS** - Développement Back-Office & API
+
+---
+
+**Driv'n Cook** - Modernisation du système d'information des food trucks 🚚✨
