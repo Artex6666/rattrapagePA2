@@ -3,7 +3,6 @@ console.log('Script chargé');
 // Fonction pour valider une adresse avec notre proxy
 async function validateAddress(address) {
   try {
-    // Recherche prioritaire en France, puis Europe, puis monde
     const searches = [
       { countrycodes: 'fr' },
       { countrycodes: 'fr,be,ch,lu,mc,ad' },
@@ -21,7 +20,7 @@ async function validateAddress(address) {
     return false;
   } catch (error) {
     console.error('Erreur lors de la validation de l\'adresse:', error);
-    return true; // En cas d'erreur réseau, on accepte l'adresse
+    return true;
   }
 }
 
@@ -33,7 +32,6 @@ function normalizeAddressQuery(query) {
   return query
     .toLowerCase()
     .trim()
-    // Remplacer les abréviations courantes
     .replace(/\bbd\b/g, 'boulevard')
     .replace(/\bboul\b/g, 'boulevard')
     .replace(/\bav\b/g, 'avenue')
@@ -51,21 +49,18 @@ function normalizeAddressQuery(query) {
     .replace(/\bpte\b/g, 'porte')
     .replace(/\bst\b/g, 'saint')
     .replace(/\bste\b/g, 'sainte')
-    // Supprimer les caractères spéciaux et normaliser les espaces
     .replace(/[-_]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-// Fonction pour formater proprement une adresse (numéro, rue, ville, code postal, pays)
+// Fonction pour formater proprement une adresse
 function formatAddressProfessional(item) {
   const parts = item.display_name.split(', ');
   const address = item.address || {};
   
-  // Construire l'adresse formatée
   let formatted = '';
   
-  // Numéro et nom de rue
   if (address.house_number && address.road) {
     formatted += `${address.house_number} ${address.road}`;
   } else if (address.road) {
@@ -74,18 +69,15 @@ function formatAddressProfessional(item) {
     formatted += parts[0];
   }
   
-  // Ville
   const city = address.city || address.town || address.village || address.municipality;
   if (city) {
     formatted += formatted ? `, ${city}` : city;
   }
   
-  // Code postal
   if (address.postcode) {
     formatted += ` ${address.postcode}`;
   }
   
-  // Pays (seulement si pas France)
   if (address.country && address.country !== 'France') {
     formatted += `, ${address.country}`;
   }
@@ -95,20 +87,17 @@ function formatAddressProfessional(item) {
 
 // Fonction pour afficher les suggestions d'adresses
 async function showAddressSuggestions(address, inputElement) {
-  if (address.length < 3) return; // Minimum 3 caractères pour éviter les recherches trop courtes
+  if (address.length < 3) return;
   
-  // Normaliser la requête pour améliorer la recherche
   const normalizedAddress = normalizeAddressQuery(address);
-  
-  // Vérifier le cache d'abord
   const cacheKey = normalizedAddress;
+  
   if (addressCache.has(cacheKey)) {
     displaySuggestions(addressCache.get(cacheKey), inputElement);
     return;
   }
   
   try {
-    // Recherche prioritaire France avec requête normalisée
     const frenchUrl = `https://api.axia.quest/annonces/geocode?q=${encodeURIComponent(normalizedAddress)}&countrycodes=fr&limit=8`;
     const frenchResponse = await fetch(frenchUrl);
     const frenchData = await frenchResponse.json();
@@ -121,7 +110,6 @@ async function showAddressSuggestions(address, inputElement) {
         priority: 'France'
       }));
     } else {
-      // Si pas de résultats avec la requête normalisée, essayer la requête originale
       const originalUrl = `https://api.axia.quest/annonces/geocode?q=${encodeURIComponent(address)}&countrycodes=fr&limit=5`;
       const originalResponse = await fetch(originalUrl);
       const originalData = await originalResponse.json();
@@ -132,7 +120,6 @@ async function showAddressSuggestions(address, inputElement) {
           priority: 'France'
         }));
       } else {
-        // Essayer Europe
         const europeUrl = `https://api.axia.quest/annonces/geocode?q=${encodeURIComponent(normalizedAddress)}&countrycodes=be,ch,lu,mc,ad,it,es,de,gb&limit=3`;
         const europeResponse = await fetch(europeUrl);
         const europeData = await europeResponse.json();
@@ -146,10 +133,8 @@ async function showAddressSuggestions(address, inputElement) {
       }
     }
     
-    // Mettre en cache
     addressCache.set(cacheKey, allResults);
     
-    // Limiter la taille du cache
     if (addressCache.size > 200) {
       const firstKey = addressCache.keys().next().value;
       addressCache.delete(firstKey);
@@ -162,30 +147,8 @@ async function showAddressSuggestions(address, inputElement) {
   }
 }
 
-// Fonction pour formater une adresse (plus courte et lisible) - DEPRECATED
-function formatAddress(fullAddress) {
-  // Séparer les éléments de l'adresse
-  const parts = fullAddress.split(', ');
-  
-  // Essayer de garder : numéro + rue, ville, code postal
-  if (parts.length >= 3) {
-    // Prendre les 2-3 premiers éléments les plus importants
-    const street = parts[0]; // Numéro et rue
-    const city = parts.find(part => /^\d{5}/.test(part) || parts.indexOf(part) <= 2);
-    const postalCode = parts.find(part => /^\d{5}/.test(part));
-    
-    if (street && city) {
-      return `${street}, ${city}`;
-    }
-  }
-  
-  // Fallback : prendre les 2 premiers éléments
-  return parts.slice(0, 2).join(', ');
-}
-
 // Fonction pour afficher les suggestions
 function displaySuggestions(data, inputElement) {
-  // Supprimer les anciennes suggestions
   const existingSuggestions = inputElement.parentElement.querySelector('.address-suggestions');
   if (existingSuggestions) {
     existingSuggestions.remove();
@@ -220,7 +183,6 @@ function displaySuggestions(data, inputElement) {
         align-items: center;
       `;
       
-      // Formater l'affichage avec une adresse professionnelle
       const professionalAddress = formatAddressProfessional(item);
       const countryFlag = item.priority === 'France' ? '🇫🇷' : 
                          item.priority === 'Europe' ? '🇪🇺' : '🌍';
@@ -234,8 +196,8 @@ function displaySuggestions(data, inputElement) {
       `;
       
       suggestionItem.addEventListener('click', () => {
-        inputElement.value = professionalAddress; // Utiliser l'adresse professionnelle
-        inputElement.dataset.fullAddress = item.display_name; // Stocker l'adresse complète
+        inputElement.value = professionalAddress;
+        inputElement.dataset.fullAddress = item.display_name;
         suggestionsDiv.remove();
       });
       
@@ -255,7 +217,7 @@ function displaySuggestions(data, inputElement) {
   }
 }
 
-// Ajout d'une fonction pour afficher un popup Bootstrap
+// Modal d'erreur Bootstrap
 document.body.insertAdjacentHTML('beforeend', `
 <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -272,6 +234,7 @@ document.body.insertAdjacentHTML('beforeend', `
   </div>
 </div>
 `);
+
 function showErrorModal(message) {
   document.getElementById('errorModalBody').innerText = message;
   const modal = new bootstrap.Modal(document.getElementById('errorModal'));
@@ -280,11 +243,9 @@ function showErrorModal(message) {
 
 // Fonction pour afficher une notification de succès
 function showSuccessNotification(message) {
-  // Supprimer les anciennes notifications
   const existingNotifications = document.querySelectorAll('.success-notification');
   existingNotifications.forEach(notif => notif.remove());
   
-  // Créer la notification
   const notification = document.createElement('div');
   notification.className = 'success-notification alert alert-success alert-dismissible position-fixed';
   notification.style.cssText = `
@@ -305,7 +266,6 @@ function showSuccessNotification(message) {
   
   document.body.appendChild(notification);
   
-  // Auto-suppression après 5 secondes
   setTimeout(() => {
     if (notification.parentElement) {
       notification.remove();
@@ -321,6 +281,7 @@ if (document.getElementById('registerForm')) {
       this.value = this.value.toLowerCase();
     });
   }
+  
   document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const firstname = this.firstname.value;
@@ -329,13 +290,14 @@ if (document.getElementById('registerForm')) {
     let email = this.email.value;
     email = email.toLowerCase();
     const password = this.password.value;
-    const type = 'client'; // Par défaut
-    // Vérification complexité mot de passe
+    const type = 'client';
+    
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!regex.test(password)) {
       showErrorModal('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre.');
       return;
     }
+    
     try {
       const res = await fetch('https://api.axia.quest/api/auth/register', {
         method: 'POST',
@@ -343,14 +305,15 @@ if (document.getElementById('registerForm')) {
         credentials: 'include',
         body: JSON.stringify({ firstName: firstname, lastName: lastname, email, password })
       });
+      
       if (res.ok) {
-        // Connexion automatique après inscription
         const loginRes = await fetch('https://api.axia.quest/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ email, password })
         });
+        
         const loginData = await loginRes.json();
         if (loginRes.ok && loginData.user) {
           window.location.href = '/';
@@ -373,6 +336,7 @@ if (document.getElementById('loginForm')) {
     e.preventDefault();
     const email = this.email.value;
     const password = this.password.value;
+    
     try {
       const res = await fetch('https://api.axia.quest/api/auth/login', {
         method: 'POST',
@@ -393,312 +357,39 @@ if (document.getElementById('loginForm')) {
   });
 }
 
-// Affichage du compte et gestion "devenir livreur" - DÉSACTIVÉ car géré dans account.ejs
-// if (window.location.pathname === '/account') {
-//   // Code désactivé pour éviter le conflit avec account.ejs
-// }
-
-// === Gestion des annonces utilisateur (version avec image et tarif, modal) ===
-let editingAnnonceId = null;
-let annonceModal;
-
-const openAnnonceModalBtn = document.getElementById('openAnnonceModalBtn');
-const annonceForm = document.getElementById('annonceForm');
-const annonceMsg = document.getElementById('annonceMsg');
-
-if (openAnnonceModalBtn) {
-  openAnnonceModalBtn.onclick = function() {
-    editingAnnonceId = null;
-    annonceForm.reset();
-    annonceForm.image.required = true;
-    document.getElementById('annonceModalLabel').innerText = 'Nouvelle annonce';
-    annonceMsg.innerText = '';
-    annonceModal.show();
-  };
-}
-
-function loadMesAnnonces() {
-  fetch('https://api.axia.quest/annonces/mes', {
-    credentials: 'include'
-  })
-    .then(res => res.json())
-    .then(annonces => {
-      const container = document.getElementById('userAnnonces');
-      if (!container) return;
-      container.innerHTML = '';
-      if (!annonces.length) {
-        container.innerHTML = `
-          <div class="alert alert-primary d-flex flex-column align-items-center justify-content-center p-4">
-            <div class="mb-0">Aucune annonce personnelle pour le moment.</div>
-          </div>
-        `;
-        return;
-      }
-      const backendUrl = 'https://api.axia.quest';
-      annonces.forEach(a => {
-        container.innerHTML += `
-          <div class="card mb-3 position-relative">
-            <button class="edit-btn" onclick="editAnnonce(${a.id})">
-              <img src="/images/edit_icon.png" alt="Modifier" class="edit-icon"> <span class="d-none d-md-inline">Modifier</span>
-            </button>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-4 text-center">
-                  <img src="${a.image ? backendUrl + a.image : '/images/no-image.png'}" alt="Image annonce" class="img-fluid rounded mb-2" style="max-height:120px;object-fit:cover;">
-                  <div class="fw-bold text-success">${a.remuneration ? a.remuneration + ' €' : ''}</div>
-                </div>
-                <div class="col-md-8">
-                  <h5>${a.titre}</h5>
-                  <p>${a.description}</p>
-                  <div><b>Départ :</b> ${a.depart} <b>Arrivée :</b> ${a.arrivee} <b>Date :</b> ${a.date}</div>
-                  <div><b>Type :</b> ${a.type}</div>
-                  <div><b>Rémunération :</b> ${a.remuneration ? a.remuneration + ' €' : ''}</div>
-                  <button class="btn btn-sm btn-danger mt-2" onclick="deleteAnnonce(${a.id})">Supprimer</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-    });
-}
-
-if (annonceForm) {
-  annonceForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const depart = this.depart.dataset.fullAddress || this.depart.value.trim();
-    const arrivee = this.arrivee.dataset.fullAddress || this.arrivee.value.trim();
-    
-    // Validation des adresses
-    annonceMsg.innerHTML = '<div class="alert alert-info">Validation des adresses en cours...</div>';
-    
-    const departValid = await validateAddress(depart);
-    const arriveeValid = await validateAddress(arrivee);
-    
-    if (!departValid) {
-      annonceMsg.innerHTML = '<div class="alert alert-danger">L\'adresse de départ n\'est pas valide. Veuillez saisir une adresse réelle.</div>';
-      return;
-    }
-    
-    if (!arriveeValid) {
-      annonceMsg.innerHTML = '<div class="alert alert-danger">L\'adresse d\'arrivée n\'est pas valide. Veuillez saisir une adresse réelle.</div>';
-      return;
-    }
-    
-    const formData = new FormData(this);
-    
-    // Utiliser les adresses complètes si disponibles
-    if (this.depart.dataset.fullAddress) {
-      formData.set('depart', this.depart.dataset.fullAddress);
-    }
-    if (this.arrivee.dataset.fullAddress) {
-      formData.set('arrivee', this.arrivee.dataset.fullAddress);
-    }
-    
-    annonceMsg.innerText = '';
-    let url = 'https://api.axia.quest/annonces';
-    let method = 'POST';
-    if (editingAnnonceId) {
-      url = 'https://api.axia.quest/annonces/' + editingAnnonceId;
-      method = 'PUT';
-      // Si pas de nouvelle image, ne pas rendre le champ obligatoire
-      if (!annonceForm.image.value) {
-        formData.delete('image');
-      }
-    }
-    fetch(url, {
-      method,
-      credentials: 'include',
-      body: formData
-    })
-    .then(async res => {
-      const raw = await res.text();
-      let data;
-      try {
-        data = JSON.parse(raw);
-      } catch (e) {
-        console.log('Réponse non JSON du serveur:', raw);
-        throw new Error('Réponse non JSON: ' + raw);
-      }
-      if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
-      return data;
-    })
-    .then(res => {
-      // Afficher une alerte Bootstrap verte en haut du formulaire
-      let alert = document.createElement('div');
-      alert.className = 'alert alert-success alert-dismissible fade show';
-      alert.role = 'alert';
-      alert.innerHTML = (editingAnnonceId ? 'Annonce modifiée !' : 'Annonce publiée !') + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>';
-      annonceForm.parentElement.prepend(alert);
-      setTimeout(() => { if (alert.parentElement) alert.parentElement.removeChild(alert); }, 3000);
-      loadMesAnnonces();
-      // Fermer le modal après succès
-      setTimeout(() => {
-        if (annonceModal) {
-          annonceModal.hide();
-        }
-        annonceForm.reset();
-      editingAnnonceId = null;
-        // Nettoyer le message
-        annonceMsg.innerHTML = '';
-        
-        // Afficher une notification Bootstrap persistante
-        showSuccessNotification(editingAnnonceId ? 'Annonce modifiée avec succès !' : 'Annonce publiée avec succès !');
-      }, 500);
-    })
-    .catch((err) => {
-      annonceMsg.innerText = 'Erreur lors de l\'envoi.';
-      console.log('Erreur lors de l\'envoi de l\'annonce:', err);
-    });
-  });
-}
-
-window.editAnnonce = function(id) {
-  fetch('https://api.axia.quest/annonces/' + id)
-    .then(res => res.json())
-    .then(a => {
-      editingAnnonceId = a.id;
-      annonceForm.titre.value = a.titre;
-      annonceForm.description.value = a.description;
-      annonceForm.depart.value = a.depart;
-      annonceForm.arrivee.value = a.arrivee;
-      annonceForm.date.value = a.date;
-      annonceForm.type.value = a.type;
-      annonceForm.remuneration.value = a.remuneration;
-      
-      // Gérer la logique inversée pour livraison_complete
-      // Si livraison_partielle = 0, alors livraison_complete = true
-      const livraisonCompleteCheckbox = document.getElementById('livraison_complete');
-      if (livraisonCompleteCheckbox) {
-        livraisonCompleteCheckbox.checked = a.livraison_partielle === 0;
-      }
-      
-      annonceForm.image.required = false;
-      document.getElementById('annonceModalLabel').innerText = 'Modifier l\'annonce';
-      annonceMsg.innerText = '';
-      annonceModal.show();
-    });
-}
-
-window.deleteAnnonce = function(id) {
-  if (!confirm('Supprimer cette annonce ?')) return;
-  fetch('https://api.axia.quest/annonces/' + id, {
-    method: 'DELETE',
-    credentials: 'include'
-  })
-    .then(res => res.json())
-    .then(res => {
-      loadMesAnnonces();
-    });
-}
-
+// Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialisation du modal Bootstrap
-  const modalElement = document.getElementById('annonceModal');
-  if (modalElement) {
-    annonceModal = new bootstrap.Modal(modalElement);
-  }
-  // Initialisation des sliders et chargement des annonces
+  // Initialisation des sliders
   if (document.getElementById('annoncesTrack')) {
     sliderShow3('annoncesTrack', 'annonce-item', 'annoncePrevBtn', 'annonceNextBtn');
   }
   if (document.getElementById('avisTrack')) {
     sliderShow3('avisTrack', 'avis-item', 'avisPrevBtn', 'avisNextBtn');
   }
-  loadMesAnnonces();
-  
-  // Vérifier si on doit ouvrir le modal d'édition
-  const urlParams = new URLSearchParams(window.location.search);
-  const editId = urlParams.get('edit');
-  if (editId && annonceModal) {
-    // Attendre que les annonces soient chargées puis ouvrir le modal
-    setTimeout(() => {
-      editAnnonce(editId);
-    }, 500);
-  }
-
-  const dateInput = document.getElementById('date');
-  if (dateInput) {
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.setAttribute('min', today);
-  }
-
-  // Charger les types d'annonces au chargement de la page
-  const typeSelect = document.getElementById('type');
-  if (typeSelect) {
-    fetch('https://api.axia.quest/annonces/types')
-      .then(response => response.json())
-      .then(data => {
-        typeSelect.innerHTML = '<option value="" disabled selected>Choisir un type</option>';
-        data.types.forEach(type => {
-          const option = document.createElement('option');
-          option.value = type;
-          option.textContent = type;
-          typeSelect.appendChild(option);
-        });
-      })
-      .catch(error => console.error('Erreur lors du chargement des types:', error));
-  }
-
-  // Ajouter l'autocomplétion pour les champs d'adresse
-  const departInput = document.getElementById('depart');
-  const arriveeInput = document.getElementById('arrivee');
-
-  if (departInput) {
-    let departTimeout;
-    departInput.addEventListener('input', function() {
-      clearTimeout(departTimeout);
-      departTimeout = setTimeout(() => {
-        showAddressSuggestions(this.value, this);
-      }, 500); // Délai de 500ms pour éviter les recherches trop fréquentes
-    });
-          
-    // Fermer les suggestions quand on clique ailleurs
-    document.addEventListener('click', function(e) {
-      if (!departInput.contains(e.target)) {
-        const suggestions = departInput.parentElement.querySelector('.address-suggestions');
-        if (suggestions) suggestions.remove();
-      }
-    });
-  }
-
-  if (arriveeInput) {
-    let arriveeTimeout;
-    arriveeInput.addEventListener('input', function() {
-      clearTimeout(arriveeTimeout);
-      arriveeTimeout = setTimeout(() => {
-        showAddressSuggestions(this.value, this);
-      }, 500); // Délai de 500ms pour éviter les recherches trop fréquentes
-    });
-    
-    // Fermer les suggestions quand on clique ailleurs
-    document.addEventListener('click', function(e) {
-      if (!arriveeInput.contains(e.target)) {
-        const suggestions = arriveeInput.parentElement.querySelector('.address-suggestions');
-        if (suggestions) suggestions.remove();
-      }
-    });
-  }
 });
 
+// Fonction slider pour les carrousels
 function sliderShow3(trackId, itemClass, prevBtnId, nextBtnId, auto = true) {
   const track = document.getElementById(trackId);
   const allItems = Array.from(track.querySelectorAll('.' + itemClass));
   const data = allItems.map(item => item.outerHTML);
   let center = 1;
+  
   if (data.length < 1) return;
+  
   function render(visibleCount = 3) {
     track.classList.remove('animating');
     track.style.transition = 'none';
     track.style.transform = 'translateX(0)';
     track.innerHTML = '';
+    
     for (let i = 0; i < visibleCount; i++) {
       let idx = (center - Math.floor(visibleCount/2) + i + data.length) % data.length;
       let temp = document.createElement('div');
       temp.innerHTML = data[idx];
       let el = temp.firstElementChild;
       el.classList.remove('center', 'side');
+      
       if (visibleCount === 1) {
         el.classList.add('center');
       } else if (i === 1) {
@@ -706,39 +397,44 @@ function sliderShow3(trackId, itemClass, prevBtnId, nextBtnId, auto = true) {
       } else {
         el.classList.add('side');
       }
+      
       el.style.display = '';
       track.appendChild(el);
     }
   }
+  
   function slide(direction) {
     const isMobile = window.matchMedia('(max-width: 600px), (orientation: portrait)').matches;
     let visibleCount = isMobile ? 1 : 3;
-    // Ajoute un 4e élément (à droite ou à gauche)
     let newIdx = direction === 'left'
       ? (center + Math.ceil(visibleCount/2)) % data.length
       : (center - Math.ceil(visibleCount/2) + data.length) % data.length;
+    
     render(visibleCount);
-    // Retire la classe 'center' de tous les éléments avant l'animation
     Array.from(track.children).forEach(el => el.classList.remove('center'));
+    
     let temp = document.createElement('div');
     temp.innerHTML = data[newIdx];
     let el = temp.firstElementChild;
     el.classList.remove('center', 'side');
     el.classList.add('side');
     el.style.display = '';
+    
     if (direction === 'left') {
-      track.appendChild(el); // à droite
+      track.appendChild(el);
     } else {
-      track.insertBefore(el, track.firstChild); // à gauche
+      track.insertBefore(el, track.firstChild);
     }
-    // Prépare la largeur et la translation
+    
     track.classList.add('animating');
     track.style.transition = 'none';
+    
     if (direction === 'left') {
       track.style.transform = 'translateX(0)';
     } else {
       track.style.transform = isMobile ? 'translateX(-100%)' : 'translateX(-33.3333%)';
     }
+    
     setTimeout(() => {
       track.style.transition = 'transform 0.5s cubic-bezier(.4,2,.6,1)';
       if (direction === 'left') {
@@ -747,6 +443,7 @@ function sliderShow3(trackId, itemClass, prevBtnId, nextBtnId, auto = true) {
         track.style.transform = 'translateX(0)';
       }
     }, 10);
+    
     setTimeout(() => {
       center = direction === 'left'
         ? (center + 1) % data.length
@@ -754,13 +451,16 @@ function sliderShow3(trackId, itemClass, prevBtnId, nextBtnId, auto = true) {
       render(visibleCount);
     }, 510);
   }
+  
   function renderResponsive() {
     const isMobile = window.matchMedia('(max-width: 600px), (orientation: portrait)').matches;
     render(isMobile ? 1 : 3);
   }
+  
   renderResponsive();
   document.getElementById(prevBtnId).onclick = () => slide('right');
   document.getElementById(nextBtnId).onclick = () => slide('left');
+  
   let interval = null;
   if (auto) {
     interval = setInterval(() => slide('left'), 3500);
@@ -769,5 +469,6 @@ function sliderShow3(trackId, itemClass, prevBtnId, nextBtnId, auto = true) {
       interval = setInterval(() => slide('left'), 3500);
     });
   }
+  
   window.addEventListener('resize', renderResponsive);
 }

@@ -85,12 +85,22 @@ app.get('/api/stats', ensureAuth, (req, res, next) => {
     const payoutsApproved = (await all("SELECT COUNT(*) as c FROM payouts WHERE status='approved'"))[0].c;
     const payoutsDone = (await all("SELECT COUNT(*) as c FROM payouts WHERE status='done'"))[0].c;
     const payoutsAmountCents = (await all("SELECT COALESCE(SUM(amount_cents),0) as s FROM payouts WHERE status IN ('approved','done')"))[0].s;
+    // Commandes par foodtruck
+    const ordersByTruckRows = await all(`
+      SELECT t.name AS name, COUNT(o.id) AS count
+      FROM trucks t
+      LEFT JOIN orders o ON o.truck_id = t.id
+      GROUP BY t.id, t.name
+      ORDER BY count DESC
+    `);
+
     res.json({
       users: { clients, franchisees, admins },
       trucks: { total: trucks, assigned: trucksAssigned },
       orders: { total: ordersTotal, pending: ordersPending, ready: ordersReady, completed: ordersCompleted },
       payouts: { requested: payoutsRequested, approved: payoutsApproved, done: payoutsDone, amount_eur: Number((payoutsAmountCents/100).toFixed(2)) },
-      revenue_eur: Number((revenueCents/100).toFixed(2))
+      revenue_eur: Number((revenueCents/100).toFixed(2)),
+      orders_by_truck: ordersByTruckRows
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
