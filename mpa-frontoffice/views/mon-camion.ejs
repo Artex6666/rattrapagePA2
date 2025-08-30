@@ -1,7 +1,7 @@
 <div class="container py-4">
   <h2 class="mb-4">Mon camion</h2>
   <div id="truckSection">
-    <div class="mb-3">
+    <div id="reserveZone" class="mb-3">
       <label class="form-label">Réserver un camion disponible</label>
       <div class="d-flex gap-2">
         <select id="availableTrucks" class="form-select" style="max-width:360px"></select>
@@ -14,16 +14,18 @@
       <div class="card-body">
         <h5 class="card-title">Camion attribué: <span id="truckName"></span></h5>
         <div class="row g-3">
-          <div class="col-md-4">
-            <label class="form-label">Latitude</label>
-            <input type="number" step="any" id="lat" class="form-control">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Longitude</label>
-            <input type="number" step="any" id="lng" class="form-control">
+          <div class="col-md-8">
+            <label class="form-label">Mettre à jour l'adresse du camion</label>
+            <div class="input-group">
+              <input id="truckAddress" class="form-control" placeholder="Saisir une adresse">
+              <button id="locateBtn" class="btn btn-outline-secondary" type="button">Localiser</button>
+            </div>
           </div>
           <div class="col-md-4 d-flex align-items-end">
-            <button id="updateLocBtn" class="btn btn-primary w-100">Mettre à jour la position</button>
+            <button id="confirmAddrBtn" class="btn btn-primary w-100 d-none" type="button">Confirmer la nouvelle adresse</button>
+          </div>
+          <div class="col-12">
+            <div id="truckMap" style="height:260px;border:1px solid #dee2e6;border-radius:8px;"></div>
           </div>
         </div>
         <hr>
@@ -56,6 +58,7 @@
 <script>
 (function(){
   const api = 'https://api.axia.quest';
+  let map = null; let marker = null; let lastGeocode = null;
   async function fetchJSON(url, opts={}){
     const res = await fetch(url, Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts));
     const data = await res.json().catch(()=>({}));
@@ -74,11 +77,16 @@
     if (mine){
       myTruckCard.classList.remove('d-none');
       document.getElementById('truckName').innerText = mine.name;
-      document.getElementById('lat').value = mine.lat || '';
-      document.getElementById('lng').value = mine.lng || '';
+      // Masquer la zone de réservation
+      document.getElementById('reserveZone').classList.add('d-none');
+      // Init carte
+      ensureLeaflet().then(()=>{
+        initMap(mine.lat || 48.8566, mine.lng || 2.3522, mine.address || '');
+      });
       myTruckCard.dataset.id = mine.id;
     } else {
       myTruckCard.classList.add('d-none');
+      document.getElementById('reserveZone').classList.remove('d-none');
       delete myTruckCard.dataset.id;
     }
   }
@@ -93,15 +101,33 @@
         load();
       } catch(e){ document.getElementById('reserveMsg').innerText = e.message; }
     });
-    document.getElementById('updateLocBtn').addEventListener('click', async ()=>{
+    // Géocodage et carte
+    document.getElementById('locateBtn').addEventListener('click', async ()=>{
+      const addr = document.getElementById('truckAddress').value.trim();
+      if (!addr) return;
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}`);
+        const j = await r.json();
+        if (!Array.isArray(j) || !j.length) { document.getElementById('truckMsg').innerText = 'Adresse introuvable'; return; }
+        const { lat, lon, display_name } = j[0];
+        lastGeocode = { lat: parseFloat(lat), lng: parseFloat(lon), address: display_name };
+        ensureLeaflet().then(()=>{
+          initMap(lastGeocode.lat, lastGeocode.lng, lastGeocode.address);
+        });
+        document.getElementById('confirmAddrBtn').classList.remove('d-none');
+        document.getElementById('truckMsg').innerText = '';
+      } catch(e){ document.getElementById('truckMsg').innerText = 'Erreur de géocodage'; }
+    });
+    document.getElementById('confirmAddrBtn').addEventListener('click', async ()=>{
       const card = document.getElementById('myTruck');
       const id = card.dataset.id;
-      const lat = parseFloat(document.getElementById('lat').value);
-      const lng = parseFloat(document.getElementById('lng').value);
-      if (!id || isNaN(lat) || isNaN(lng)) { document.getElementById('truckMsg').innerText = 'Coordonnées invalides'; return; }
+      if (!id || !lastGeocode) return;
       try {
-        await fetchJSON(api + '/api/trucks/' + id + '/location', { method:'POST', body: JSON.stringify({ lat, lng }) });
-        document.getElementById('truckMsg').innerText = 'Position mise à jour';
+        await fetchJSON(api + '/api/trucks/' + id + '/location', { method:'POST', body: JSON.stringify({ lat:lastGeocode.lat, lng:lastGeocode.lng }) });
+        // Mise à jour adresse en base côté truck: utiliser PUT truck pour stocker l'adresse si souhaité
+        await fetchJSON(api + '/api/trucks/' + id, { method:'PUT', body: JSON.stringify({ address: lastGeocode.address }) });
+        document.getElementById('truckMsg').innerText = 'Adresse mise à jour';
+        document.getElementById('confirmAddrBtn').classList.add('d-none');
       } catch(e){ document.getElementById('truckMsg').innerText = e.message; }
     });
     document.getElementById('reportIncidentBtn').addEventListener('click', async ()=>{
@@ -129,6 +155,20 @@
       } catch(e){ document.getElementById('truckMsg').innerText = e.message; }
     });
   });
+  function ensureLeaflet(){
+    return new Promise((resolve)=>{
+      if (window.L) return resolve();
+      const css = document.createElement('link'); css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+      const s = document.createElement('script'); s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.onload=()=>resolve(); document.body.appendChild(s);
+    });
+  }
+  function initMap(lat, lng, label){
+    const L = window.L;
+    if (!map){ map = L.map('truckMap').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(map); }
+    else { map.setView([lat, lng], 14); }
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng]).addTo(map).bindPopup(label||'').openPopup();
+  }
 })();
 </script>
 

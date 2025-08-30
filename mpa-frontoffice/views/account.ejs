@@ -191,7 +191,7 @@ async function loadMe() {
     }
     
     // Afficher la section solde et retraits uniquement pour les franchisés
-    if (data.user.role === 'franchise') {
+    if (data.user.role === 'franchisé') {
       document.getElementById('balanceSection').style.display='block';
     }
   } else {

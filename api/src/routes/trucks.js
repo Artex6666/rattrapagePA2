@@ -40,6 +40,11 @@ router.post('/:id/reserve', ensureAuth, async (req, res) => {
     if (!(req.user.role === 'franchisé' || req.user.role === 'ADMIN')) {
       return res.status(403).json({ error: 'Réservé aux franchisés' });
     }
+    // Empêcher plusieurs camions pour un même franchisé
+    const already = await get('SELECT id FROM trucks WHERE franchisee_user_id = ? LIMIT 1', [req.user.id]);
+    if (already && (!t.franchisee_user_id || t.franchisee_user_id !== req.user.id)) {
+      return res.status(409).json({ error: 'Vous avez déjà un camion attribué' });
+    }
     // Si déjà pris par quelqu'un d'autre
     if (t.franchisee_user_id && t.franchisee_user_id !== req.user.id) {
       return res.status(409).json({ error: 'Camion déjà réservé' });

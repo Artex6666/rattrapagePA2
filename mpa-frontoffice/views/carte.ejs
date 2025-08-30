@@ -44,7 +44,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   let trucks = [], warehouses = [], myId = null;
   if (role === 'franchisé' || role === 'ADMIN') {
     const meFull = await fetch('https://api.axia.quest/api/users/me', { credentials: 'include' });
-    if (meFull.ok) { const j = await meFull.json(); myId = j.id || j.user?.id; }
+    if (meFull.ok) { const j = await meFull.json(); myId = (j && (j.id || (j.user && j.user.id))) || null; }
+    if (myId != null) { myId = Number(myId); }
     const res = await fetch('https://api.axia.quest/api/map/franchise', { credentials: 'include' });
     const data = await res.json();
     trucks = data.trucks || []; warehouses = data.warehouses || [];
@@ -59,7 +60,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     if (!t.lat || !t.lng) return;
     let icon = icons.client;
     if (role === 'franchisé' || role === 'ADMIN') {
-      if (t.franchisee_user_id && myId && t.franchisee_user_id === myId) icon = icons.mine; else icon = icons.others;
+      const ownerId = t.franchisee_user_id != null ? Number(t.franchisee_user_id) : null;
+      if (ownerId && myId && ownerId === myId) icon = icons.mine; else icon = icons.others;
     }
     const m = L.marker([t.lat, t.lng], { icon }).addTo(map);
     const popup = `<div style="min-width:180px">

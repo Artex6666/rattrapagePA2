@@ -2,9 +2,9 @@ const svc = require('../services/ordersService');
 
 async function create(req, res){
   try {
-    const { truckId, items, use_reward } = req.body;
+    const { truckId, items, use_reward, menuPack, menuPackQty } = req.body;
     if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'Items requis' });
-    const out = await svc.createOrder({ userId: req.user.id, truckId, items, useReward: use_reward });
+    const out = await svc.createOrder({ userId: req.user.id, truckId, items, useReward: use_reward, menuPack: !!menuPack, menuPackQty });
     res.status(201).json({ ok:true, ...out });
   } catch(e){ res.status(500).json({ error: e.message }); }
 }

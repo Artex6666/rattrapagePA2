@@ -80,4 +80,16 @@ router.get('/mon-camion', checkAuth, async (req, res) => {
   }
 });
 
+// Mes commandes (client)
+router.get('/mes-commandes', checkAuth, async (req, res) => {
+  try { res.render('mes-commandes', { title: 'Mes commandes' }); }
+  catch(e){ res.status(500).render('404', { title:'Erreur' }); }
+});
+
+// Mes ordres (franchisé)
+router.get('/mes-ordres', checkAuth, async (req, res) => {
+  try { res.render('mes-ordres', { title: 'Mes ordres' }); }
+  catch(e){ res.status(500).render('404', { title:'Erreur' }); }
+});
+
 module.exports = router;

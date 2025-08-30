@@ -18,14 +18,13 @@
   </svg>
 </div>
 <div class="container py-5 d-flex flex-column align-items-center justify-content-center" style="min-height:80vh;z-index:2;position:relative;">
-  <div class="text-center animate__animated animate__fadeInDown animate__faster">
+  <div class="text-center">
     <img src="/images/404_image.png" alt="404 Not Found" class="mb-4 notfound-img" style="max-width:480px;">
     <div>
-      <a href="/" class="btn btn-lg btn-primary shadow animate__animated animate__pulse animate__infinite">Retour à l'accueil</a>
+      <a href="/" class="btn btn-lg btn-primary shadow">Retour à l'accueil</a>
     </div>
   </div>
 </div>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <style>
 .notfound-bg {
   position: fixed;
@@ -39,22 +38,12 @@
   top: 0; left: 0; width: 100vw; height: 600px;
   min-height: 400px;
   opacity: 0.95;
-  animation: bgMove404 18s linear infinite alternate;
-}
-@keyframes bgMove404 {
-  0% { transform: translateY(0px) scale(1); }
-  100% { transform: translateY(-40px) scale(1.03); }
 }
 .notfound-img {
   border-radius: 2rem;
   box-shadow: 0 8px 40px 0 rgba(41,128,185,0.13), 0 1.5px 8px 0 rgba(100,100,100,0.07);
   border: 6px solid #e0e7ff;
   background: #fff;
-  animation: floating404 3.5s ease-in-out infinite alternate;
-}
-@keyframes floating404 {
-  0% { transform: translateY(0px) scale(1.03); }
-  100% { transform: translateY(-18px) scale(1.07); }
 }
 body {
   background: transparent !important;

@@ -73,6 +73,7 @@ async function initDb() {
   try { await run('ALTER TABLE users ADD COLUMN is_validated INTEGER NOT NULL DEFAULT 0'); } catch (e) {}
   try { await run("ALTER TABLE franchise_applications ADD COLUMN phone TEXT"); } catch (e) {}
   try { await run("ALTER TABLE franchise_applications ADD COLUMN status TEXT NOT NULL DEFAULT 'en_attente'"); } catch (e) {}
+  try { await run("ALTER TABLE orders ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'"); } catch (e) {}
 
   await run(`CREATE TABLE IF NOT EXISTS warehouses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,6 +102,7 @@ async function initDb() {
     truck_id INTEGER,
     items_json TEXT NOT NULL,
     total_cents INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending', -- pending|ready|completed
     used_reward INTEGER NOT NULL DEFAULT 0,
     loyalty_points_earned INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,

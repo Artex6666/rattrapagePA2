@@ -1,0 +1,67 @@
+<div class="container py-4">
+  <h2 class="mb-3">Mes ordres</h2>
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Commandes à préparer</h5>
+      <div id="ordersToPrepare"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  async function load(){
+    const res = await fetch('https://api.axia.quest/api/orders/franchise/me', { credentials:'include' });
+    const rows = await res.json();
+    const pendings = rows.filter(o => o.status === 'pending' || o.status === 'ready');
+    const render = (list)=> list.length ? `<div class="list-group">
+      ${list.map(o=>{
+        const items = (()=>{ try { return JSON.parse(o.items_json||'[]'); } catch(e){ return []; }})();
+        return `<div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold">Commande #${o.id} - ${(o.total_cents/100).toFixed(2)}€</div>
+              <div class="text-muted small">${new Date(o.created_at).toLocaleString('fr-FR')} • ${o.status}</div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-sm ${o.status==='ready'?'btn-success':'btn-outline-success'}" data-action="ready" data-id="${o.id}">Prête</button>
+              <button class="btn btn-sm ${o.status==='completed'?'btn-secondary':'btn-outline-secondary'}" data-action="completed" data-id="${o.id}">Complétée</button>
+            </div>
+          </div>
+          <div class="mt-2 small text-muted border-start ps-2">
+            ${items.map(it=>`${it.qty} × ${it.name}`).join(' • ') || '-'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : '<div class="text-muted">Aucune commande en attente.</div>';
+    document.getElementById('ordersToPrepare').innerHTML = render(pendings);
+  }
+  async function updateStatus(id, status){
+    const badge = document.createElement('div');
+    badge.className = 'alert alert-info py-1 my-2';
+    badge.innerText = 'Mise à jour...';
+    const host = document.getElementById('ordersToPrepare');
+    host.prepend(badge);
+    try {
+      const res = await fetch('https://api.axia.quest/api/orders/'+id+'/status', { method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ status }) });
+      const ok = res.ok;
+      await load();
+      badge.className = ok ? 'alert alert-success py-1 my-2' : 'alert alert-danger py-1 my-2';
+      badge.innerText = ok ? 'Statut mis à jour' : 'Échec de mise à jour';
+    } catch(e){
+      badge.className = 'alert alert-danger py-1 my-2';
+      badge.innerText = 'Erreur réseau';
+    }
+    setTimeout(()=>{ if (badge.parentElement) badge.remove(); }, 1500);
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    load();
+    document.body.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      updateStatus(btn.dataset.id, btn.dataset.action);
+    });
+  });
+})();
+</script>
+
+

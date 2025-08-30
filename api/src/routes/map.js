@@ -8,7 +8,7 @@ router.get('/public', async (req, res) => {
 });
 
 router.get('/franchise', async (req, res) => {
-  const trucks = await all('SELECT id, name, lat, lng FROM trucks WHERE lat IS NOT NULL AND lng IS NOT NULL');
+  const trucks = await all('SELECT id, name, lat, lng, franchisee_user_id FROM trucks WHERE lat IS NOT NULL AND lng IS NOT NULL');
   const warehouses = await all('SELECT id, name, lat, lng FROM warehouses WHERE lat IS NOT NULL AND lng IS NOT NULL');
   res.json({ trucks, warehouses });
 });

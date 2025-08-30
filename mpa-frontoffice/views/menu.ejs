@@ -14,7 +14,7 @@
       <div class="card mb-3">
         <div class="card-body">
           <h5 class="card-title">Offre Menu 15€</h5>
-          <p class="text-muted">1 plat + 1 boisson au choix</p>
+          <p class="text-muted">1 plat + 1 boisson au choix + 1 dessert</p>
           <div class="mb-2">
             <label class="form-label">Choisir un plat</label>
             <div class="d-flex gap-3">
@@ -37,22 +37,24 @@
               <option value="Boisson agrumes">Boisson agrumes</option>
             </select>
           </div>
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <input class="form-check-input" type="checkbox" id="menuPack" checked>
-            <label class="form-check-label" for="menuPack">
-              <i class="bi bi-basket-fill me-1"></i>Offre Menu 15€
-            </label>
+          <div class="mb-2">
+            <label class="form-label"><i class="bi bi-basket-fill me-1"></i>Offre Menu 15€</label>
+            <div class="input-group">
+              <span class="input-group-text">Quantité</span>
+              <input id="menuPackQty" type="number" min="0" value="0" class="form-control" style="max-width:120px">
+            </div>
+            <small class="text-muted">Inclut 1 plat + 1 boisson + 1 dessert pour 15€ par menu</small>
           </div>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="useReward">
-            <label class="form-check-label" for="useReward">Utiliser mes points (si seuil atteint)</label>
+            <input class="form-check-input" type="checkbox" id="useReward" disabled>
+            <label class="form-check-label" for="useReward">Utiliser mes points</label>
           </div>
         </div>
       </div>
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">Paiement</h5>
-          <button id="orderBtn" class="btn btn-primary w-100">Payer (fictif)</button>
+          <button id="orderBtn" class="btn btn-primary w-100">Payer 0,00€</button>
           <div id="orderMsg" class="mt-2"></div>
           <hr>
           <h6>Fidélité</h6>
@@ -83,7 +85,8 @@ function renderMenuItems() {
   const items = [
     { name: 'Burger Classique', price_cents: 1200, image: '/images/burger.webp', description: 'Pain brioché, steak, cheddar, oignons, salade, sauce maison.' },
     { name: 'Tacos Poulet', price_cents: 1100, image: '/images/tacos.jpg', description: 'Tortilla, poulet mariné, frites, sauce fromagère.' },
-    { name: 'Boisson', price_cents: 300, image: '/images/boissons.jpg', description: 'Boissons fraîches au choix.' }
+    { name: 'Boisson', price_cents: 300, image: '/images/boissons.jpg', description: 'Boissons fraîches au choix.' },
+    { name: 'Dessert Brownie au chocolat', price_cents: 300, image: '/images/dessert.jpg', description: 'Brownie fondant au chocolat, fait maison.' }
   ];
   const container = document.getElementById('items');
   container.innerHTML = items.map((it,i)=>`
@@ -117,89 +120,150 @@ async function loadLoyalty() {
   const cfg = await (await fetch('https://api.axia.quest/api/loyalty/config')).json();
   const points = (me.user && me.user.loyalty_points) || 0;
   const pct = Math.min(100, Math.floor(points * 100 / cfg.reward_threshold_points));
-  document.getElementById('loyaltyInfo').innerText = `Points: ${points} / ${cfg.reward_threshold_points}`;
+  const free = cfg.reward_free_menus || 1;
+  document.getElementById('loyaltyInfo').innerText = `Points: ${points} / ${cfg.reward_threshold_points} • ${free} menu offert`;
   document.getElementById('loyaltyProgress').style.width = pct + '%';
+  const useReward = document.getElementById('useReward');
+  if (useReward) {
+    useReward.disabled = points < cfg.reward_threshold_points;
+    useReward.checked = !useReward.disabled && useReward.checked;
+  }
 }
 document.addEventListener('DOMContentLoaded', async ()=>{
   await loadTrucks();
   const menu = renderMenuItems();
   await loadLoyalty();
+  function computeTotalPreview(){
+    const qtyInputs = Array.from(document.querySelectorAll('#items input[data-idx]'));
+    let itemsSel = qtyInputs.map(inp=>({ ...menu[Number(inp.dataset.idx)], qty: Number(inp.value)||0 }));
+    const mpQty = Math.max(0, Number(document.getElementById('menuPackQty')?.value)||0);
+    const drinkName = document.getElementById('drinkSelect').value || 'Boisson';
+    const drinkIdx = menu.findIndex(i=>i.name.startsWith('Boisson'));
+         // Forcer la présence des composants du menu pour mpQty
+     if (mpQty>0 && drinkIdx>=0) {
+       // Plat sélectionné via radio
+       const selectedDish = document.querySelector('input[name="menuDish"]:checked')?.value || 'Burger Classique';
+       const dishIdx = menu.findIndex(i=>i.name===selectedDish);
+       if (dishIdx>=0) {
+         const dishExisting = itemsSel.find(i=>i.name===selectedDish);
+         if (dishExisting) { dishExisting.qty = Math.max(dishExisting.qty, mpQty); }
+         else itemsSel.push({ ...menu[dishIdx], qty: mpQty });
+       }
+       // Boisson quantité = mpQty
+       const drinkExisting = itemsSel.find(i=>i.name.startsWith('Boisson'));
+       if (drinkExisting) { drinkExisting.qty = Math.max(drinkExisting.qty, mpQty); drinkExisting.name = drinkName; }
+       else itemsSel.push({ ...menu[drinkIdx], name: drinkName, qty: mpQty });
+       // Dessert quantité = mpQty
+       const dessertIdx = menu.findIndex(i=>i.name.includes('Dessert'));
+       if (dessertIdx>=0) {
+         const dessertExisting = itemsSel.find(i=>i.name.includes('Dessert'));
+         if (dessertExisting) { dessertExisting.qty = Math.max(dessertExisting.qty, mpQty); }
+         else itemsSel.push({ ...menu[dessertIdx], qty: mpQty });
+       }
+     }
+    let total = itemsSel.reduce((s,it)=>s + it.price_cents*it.qty, 0);
+         if (mpQty>0) {
+       const isDrink = (name)=>String(name||'').toLowerCase().startsWith('boisson');
+       const isDessert = (name)=>String(name||'').toLowerCase().includes('dessert');
+       const dish = itemsSel.find(it=>it.qty>0 && !isDrink(it.name) && !isDessert(it.name));
+       const drink = itemsSel.find(it=>it.qty>0 && isDrink(it.name));
+       const dessert = itemsSel.find(it=>it.qty>0 && isDessert(it.name));
+       if (dish && drink && dessert) {
+         const pairs = Math.max(0, Math.min(mpQty, Number(dish.qty)||0, Number(drink.qty)||0, Number(dessert.qty)||0));
+         if (pairs>0) total = total - ((dish.price_cents+drink.price_cents+dessert.price_cents)*pairs) + (1500*pairs);
+       }
+     }
+    document.getElementById('orderBtn').textContent = `Payer ${(total/100).toFixed(2)}€`;
+    return { itemsSel, total };
+  }
+  document.getElementById('items').addEventListener('input', computeTotalPreview);
+  document.getElementById('drinkSelect').addEventListener('change', computeTotalPreview);
+  const mpq = document.getElementById('menuPackQty'); if (mpq) mpq.addEventListener('input', computeTotalPreview);
+  computeTotalPreview();
   document.getElementById('orderBtn').addEventListener('click', async ()=>{
+    // Bloquer si non connecté
+    try {
+      const meCheck = await fetch('https://api.axia.quest/api/auth/me', { credentials:'include' });
+      const meJson = await meCheck.json();
+      if (!meJson.user) {
+        document.getElementById('orderMsg').innerHTML = '<span class="text-danger"><i class="bi bi-info-circle-fill me-1"></i>Veuillez vous connecter avant de payer.</span>';
+        return;
+      }
+    } catch(e){
+      document.getElementById('orderMsg').innerHTML = '<span class="text-danger"><i class="bi bi-info-circle-fill me-1"></i>Veuillez vous connecter avant de payer.</span>';
+      return;
+    }
          const qtyInputs = Array.from(document.querySelectorAll('#items input[data-idx]'));
      let items = qtyInputs.map(inp=>({ ...menu[Number(inp.dataset.idx)], qty: Number(inp.value)||0 })).filter(i=>i.qty>0);
      
 
      
-     // Si Offre menu 15€ cochée, forcer 1 plat choisi + 1 boisson
-     const menuPack = document.getElementById('menuPack')?.checked;
-     if (menuPack) {
-       // Ajouter 1 item plat sélectionné
+           // Si Offre menu 15€ sélectionnée, forcer 1 plat choisi + 1 boisson
+      const menuPackQty = Number(document.getElementById('menuPackQty')?.value) || 0;
+      if (menuPackQty > 0) {
+       // Ajouter les items du menu pack
        const dish = document.querySelector('input[name="menuDish"]:checked')?.value || 'Burger Classique';
        const dishIdx = menu.findIndex(i=>i.name===dish);
        if (dishIdx>=0) {
          // Remplacer la quantité si déjà présente, sinon ajouter
          const existingDish = items.find(i=>i.name===dish);
          if (existingDish) {
-           existingDish.qty = 1;
+           existingDish.qty = Math.max(existingDish.qty, menuPackQty);
          } else {
-           items.push({ ...menu[dishIdx], qty: 1 });
+           items.push({ ...menu[dishIdx], qty: menuPackQty });
          }
        }
-       // Ajouter 1 boisson
+       // Ajouter les boissons du menu pack
        const drinkName = document.getElementById('drinkSelect').value || 'Boisson';
        const drinkIdx = menu.findIndex(i=>i.name.startsWith('Boisson'));
        if (drinkIdx>=0) {
          // Remplacer la quantité si déjà présente, sinon ajouter
          const existingDrink = items.find(i=>i.name.startsWith('Boisson'));
          if (existingDrink) {
-           existingDrink.qty = 1;
+           existingDrink.qty = Math.max(existingDrink.qty, menuPackQty);
            existingDrink.name = drinkName; // Mettre à jour le nom de la boisson
          } else {
-           items.push({ ...menu[drinkIdx], name: drinkName, qty: 1 });
+           items.push({ ...menu[drinkIdx], name: drinkName, qty: menuPackQty });
+         }
+       }
+       // Ajouter les desserts du menu pack
+       const dessertIdx = menu.findIndex(i=>i.name.includes('Dessert'));
+       if (dessertIdx>=0) {
+         // Remplacer la quantité si déjà présente, sinon ajouter
+         const existingDessert = items.find(i=>i.name.includes('Dessert'));
+         if (existingDessert) {
+           existingDessert.qty = Math.max(existingDessert.qty, menuPackQty);
+         } else {
+           items.push({ ...menu[dessertIdx], qty: menuPackQty });
          }
        }
      }
      
-     if (items.length===0) { 
-       document.getElementById('orderMsg').innerHTML = '<span class="text-danger"><i class="bi bi-info-circle-fill me-1"></i>Choisissez au moins un article</span>'; 
-       return; 
-     }
+           // Vérifier si on a des articles OU une offre menu 15€
+      const hasMenuPack = (Number(document.getElementById('menuPackQty')?.value)||0) > 0;
+      if (items.length === 0 && !hasMenuPack) { 
+        document.getElementById('orderMsg').innerHTML = '<span class="text-danger"><i class="bi bi-info-circle-fill me-1"></i>Choisissez au moins un article</span>'; 
+        return; 
+      }
     const truckId = document.getElementById('truckSelect').value;
     if (!truckId) {
       document.getElementById('orderMsg').innerHTML = '<span class="text-danger"><i class="bi bi-info-circle-fill me-1"></i>Sélection du camion obligatoire.</span>';
       return;
     }
 
-    if (menuPack) {
-      // Ajouter 1 item plat sélectionné
-      const dish = document.querySelector('input[name="menuDish"]:checked')?.value || 'Burger Classique';
-      const dishIdx = menu.findIndex(i=>i.name===dish);
-      if (dishIdx>=0) {
-        // Remplacer la quantité si déjà présente, sinon ajouter
-        const existingDish = items.find(i=>i.name===dish);
-        if (existingDish) {
-          existingDish.qty = 1;
-        } else {
-          items.push({ ...menu[dishIdx], qty: 1 });
-        }
-      }
-      // Ajouter 1 boisson
-      const drinkName = document.getElementById('drinkSelect').value || 'Boisson';
-      const drinkIdx = menu.findIndex(i=>i.name.startsWith('Boisson'));
-      if (drinkIdx>=0) {
-        // Remplacer la quantité si déjà présente, sinon ajouter
-        const existingDrink = items.find(i=>i.name.startsWith('Boisson'));
-        if (existingDrink) {
-          existingDrink.qty = 1;
-          existingDrink.name = drinkName; // Mettre à jour le nom de la boisson
-        } else {
-          items.push({ ...menu[drinkIdx], name: drinkName, qty: 1 });
-        }
-      }
+
+    // Vérifier si utilisateur a assez de points avant d'envoyer use_reward
+    let useReward = document.getElementById('useReward').checked;
+    if (useReward) {
+      try {
+        const me = await (await fetch('https://api.axia.quest/api/auth/me', { credentials:'include' })).json();
+        const cfg = await (await fetch('https://api.axia.quest/api/loyalty/config')).json();
+        if (!me.user || (me.user.loyalty_points||0) < cfg.reward_threshold_points) useReward = false;
+      } catch(e){ useReward = false; }
     }
     const res = await fetch('https://api.axia.quest/api/orders', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ truckId, items, use_reward: document.getElementById('useReward').checked })
+      body: JSON.stringify({ truckId, items, use_reward: useReward, menuPack: (Number(document.getElementById('menuPackQty')?.value)||0) > 0, menuPackQty: Number(document.getElementById('menuPackQty')?.value)||0 })
     });
     const out = await res.json();
     if (!res.ok) { document.getElementById('orderMsg').innerText = out.error || 'Erreur'; return; }

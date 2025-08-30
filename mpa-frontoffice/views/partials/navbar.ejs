@@ -64,6 +64,10 @@ function updateNavbar() {
   .then(data => {
     console.log('Utilisateur connecté :', data); // 🔍 AJOUTE ÇA
     if (data.user) {
+      links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/mes-commandes">Mes commandes</a></li>';
+      if (data.user.role === 'franchisé') {
+        links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/mes-ordres">Mes ordres</a></li>';
+      }
       if (data.user.role === 'franchisé') {
         links.innerHTML += '<li class="nav-item"><a class="nav-link" href="/mon-camion">Mon camion</a></li>';
       }
