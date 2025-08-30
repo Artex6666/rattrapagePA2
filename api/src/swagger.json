@@ -1,0 +1,141 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Driv'n Cook API",
+    "version": "1.0.0",
+    "description": "API pour front (EJS) et back-office (Vue). Auth par cookie JWT."
+  },
+  "servers": [
+    { "url": "https://api.axia.quest", "description": "Serveur de production" },
+    { "url": "http://localhost:3000", "description": "Serveur de développement local" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": { "type": "apiKey", "in": "cookie", "name": "token" }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {"type":"integer"},
+          "email": {"type":"string"},
+          "role": {"type":"string"}
+        }
+      },
+      "Review": {
+        "type": "object",
+        "properties": {
+          "id": {"type":"integer"},
+          "rating": {"type":"integer"},
+          "comment": {"type":"string"},
+          "status": {"type":"string"}
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/users": {
+      "get": {"summary": "Lister les utilisateurs (admin)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/users/{id}": {
+      "get": {"summary": "Lire utilisateur (admin)", "security": [{"cookieAuth": []}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}], "responses": {"200": {"description": "OK"}, "404": {"description": "Not found"}}}
+    },
+    "/api/users/{id}/role": {
+      "post": {"summary": "MAJ rôle (admin)", "security": [{"cookieAuth": []}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","required":["role"],"properties":{"role":{"type":"string"}}}}}}, "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/users/{id}/validate": {
+      "post": {"summary": "Valider utilisateur (admin)", "security": [{"cookieAuth": []}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/users/{id}/recheck": {
+      "post": {"summary": "Renvoyer en vérification (admin)", "security": [{"cookieAuth": []}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/users/{id}": {
+      "delete": {"summary": "Supprimer utilisateur (admin)", "security": [{"cookieAuth": []}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/franchises/apply": {
+      "post": {"summary": "Candidater franchisé (upload PDF)", "security": [{"cookieAuth": []}], "requestBody": {"required": true, "content": {"multipart/form-data": {"schema": {"type":"object","required":["siret","tva","preuvePdf"],"properties":{"siret":{"type":"string"},"tva":{"type":"string"},"phone":{"type":"string"},"preuvePdf":{"type":"string","format":"binary"}}}}}}, "responses": {"201": {"description": "Créé"}}}
+    },
+    "/api/franchises/applications": {
+      "get": {"summary": "Lister candidatures (admin)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/franchises/applications/{id}/approve": {
+      "post": {"summary": "Approuver (admin)", "security": [{"cookieAuth": []}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/franchises/applications/{id}/reject": {
+      "post": {"summary": "Rejeter (admin) avec message (email)", "security": [{"cookieAuth": []}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}], "requestBody": {"required": false, "content": {"application/json": {"schema": {"type":"object","properties":{"message":{"type":"string"}}}}}}, "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/franchises/my-application": {
+      "get": {"summary": "Ma candidature (suivi)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/franchises/pending": {
+      "get": {"summary": "Lister candidatures en attente (admin)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/franchises/validated": {
+      "get": {"summary": "Lister franchisés validés (admin)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/franchises/{id}/convert-to-member": {
+      "post": {"summary": "Convertir franchisé en membre (admin) - libère les camions", "security": [{"cookieAuth": []}], "parameters": [{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/health": {
+      "get": { "summary": "Healthcheck", "responses": {"200": {"description": "OK"}} }
+    },
+    "/api/auth/register": {
+      "post": {
+        "summary": "Inscription",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","required":["email","password"],"properties":{"email":{"type":"string"},"password":{"type":"string"}}}}}},
+        "responses": {"201": {"description": "Créé"}, "409": {"description": "Email déjà utilisé"}}
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Connexion (dépose un cookie JWT)",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","required":["email","password"],"properties":{"email":{"type":"string"},"password":{"type":"string"}}}}}},
+        "responses": {"200": {"description": "Connecté"}, "401": {"description": "Invalid"}}
+      }
+    },
+    "/api/auth/me": {
+      "get": {"summary": "Profil courant", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"type":"object","properties":{"user":{"$ref":"#/components/schemas/User"}}}}}}, "401": {"description":"Unauthorized"}}}
+    },
+    "/api/users/me": {
+      "get": {"summary": "Lire le profil (extended)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}},
+      "put": {"summary": "MAJ opt-in newsletter", "security": [{"cookieAuth": []}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","properties":{"newsletter_optin":{"type":"boolean"}}}}}}, "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/reviews/public": {
+      "get": {"summary": "Avis approuvés (homepage)", "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"type":"array","items": {"$ref":"#/components/schemas/Review"}}}}}}}
+    },
+    "/api/reviews": {
+      "post": {"summary": "Soumettre un avis (client)", "security": [{"cookieAuth": []}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"type":"object","required":["rating","comment"],"properties":{"rating":{"type":"integer"},"comment":{"type":"string"}}}}}}, "responses": {"201": {"description": "Créé"}}},
+      "get": {"summary": "Lister avis (admin)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/reviews/me": {
+      "get": {"summary": "Mes avis", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/trucks": {
+      "get": {"summary": "Food trucks actifs (public)", "responses": {"200": {"description": "OK"}}},
+      "post": {"summary": "Créer camion (admin)", "security": [{"cookieAuth": []}], "responses": {"201": {"description": "Créé"}}}
+    },
+    "/api/warehouses": {
+      "get": {"summary": "Entrepôts (public)", "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/orders": {
+      "post": {"summary": "Créer commande (points + 4%)", "security": [{"cookieAuth": []}], "responses": {"201": {"description": "Créé"}}}
+    },
+    "/api/payouts/request": {
+      "post": {"summary": "Demande de retrait (franchisé)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/incidents": {
+      "get": {"summary": "Lister incidents (admin ou franchisé)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}},
+      "post": {"summary": "Déclarer incident (franchisé/admin)", "security": [{"cookieAuth": []}], "responses": {"201": {"description": "Créé"}}}
+    },
+    "/api/loyalty/config": {
+      "get": {"summary": "Lire config fidélité", "responses": {"200": {"description": "OK"}}},
+      "put": {"summary": "MAJ config fidélité (admin)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}}
+    },
+    "/api/newsletter/campaigns": {
+      "get": {"summary": "Lister campagnes (admin)", "security": [{"cookieAuth": []}], "responses": {"200": {"description": "OK"}}},
+      "post": {"summary": "Créer campagne (admin)", "security": [{"cookieAuth": []}], "responses": {"201": {"description": "Créé"}}}
+    }
+  }
+}
+
+

@@ -1,0 +1,358 @@
+<div class="container py-5">
+  <h2 class="mb-5 text-center fw-bold display-5">Mon Compte</h2>
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-lg border-0 mb-4 animate-fadein" style="border-radius:1.2rem;">
+        <div class="card-body text-center">
+          <div id="userInfo"></div>
+        </div>
+      </div>
+      <div id="becomeFranchiseSection" class="text-center" style="display:none;">
+        <button class="btn btn-warning mb-3 px-4 py-2 fw-bold animate-fadein" id="showFranchiseModal"><i class="bi bi-truck me-2"></i>Devenir franchisé</button>
+      </div>
+      
+      <!-- Section suivi de dossier franchisé -->
+      <div id="franchiseStatusSection" class="card shadow-sm p-3 mt-4" style="display: none;">
+        <h5><i class="bi bi-clipboard-check me-2"></i>Suivi de ma candidature franchisé</h5>
+        <div id="franchiseStatusInfo">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Statut :</strong> <span id="franchiseStatus">En attente de validation</span>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <small class="text-muted">SIRET : <span id="franchiseSiret">-</span></small>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted">TVA : <span id="franchiseTva">-</span></small>
+            </div>
+          </div>
+          <div class="mt-2">
+            <small class="text-muted">Date de candidature : <span id="franchiseDate">-</span></small>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="franchiseModal" tabindex="-1" aria-labelledby="franchiseModalLabel" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content p-4">
+            <div class="modal-header border-0">
+              <h5 class="modal-title" id="franchiseModalLabel">Candidature franchisé</h5>
+            </div>
+            <div class="modal-body">
+              <form id="franchiseForm" enctype="multipart/form-data">
+                <div class="mb-3">
+                  <label class="form-label">SIRET</label>
+                  <input type="text" class="form-control" name="siret" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Numéro de TVA</label>
+                  <input type="text" class="form-control" name="tva" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Téléphone</label>
+                  <input type="tel" class="form-control" name="phone" placeholder="ex: 0612345678" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">IBAN de destination</label>
+                  <input type="text" class="form-control" name="iban" value="FR7630001007941234567890185" required>
+                  <small class="form-text text-muted">IBAN par défaut pour la démo</small>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Preuve de virement (PDF, 50 000€)</label>
+                  <input type="file" class="form-control" name="preuvePdf" accept="application/pdf" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Envoyer ma candidature</button>
+                <div id="franchiseMsg" class="mt-2"></div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="balanceSection" class="card shadow-sm p-3 mt-4" style="display: none;">
+        <h5>Mon solde et retraits</h5>
+        <div id="balanceInfo"></div>
+        <form id="payoutForm" class="row g-2 mt-2">
+          <div class="col-md-6"><input type="text" class="form-control" name="iban" placeholder="IBAN" required></div>
+          <div class="col-md-4"><input type="number" min="1" class="form-control" name="amount" placeholder="Montant (€)" required></div>
+          <div class="col-md-2"><button class="btn btn-outline-primary w-100" type="submit">Retirer</button></div>
+        </form>
+        <div id="payoutMsg" class="mt-2"></div>
+        <div class="mt-3">
+          <h6>Historique des retraits</h6>
+          <ul id="payoutHistory" class="list-group"></ul>
+        </div>
+      </div>
+      <div class="card shadow-sm p-3 mt-4">
+        <h5>Newsletter</h5>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="optin" checked>
+          <label class="form-check-label" for="optin">Recevoir la newsletter</label>
+        </div>
+      </div>
+      <div class="card shadow-sm p-3 mt-4">
+        <h5>Donner un avis</h5>
+        <form id="reviewForm" class="row g-2">
+          <div class="col-md-3">
+            <select class="form-select" name="rating" required>
+              <option value="" disabled selected>Note</option>
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★</option>
+              <option value="3">★★★</option>
+              <option value="2">★★</option>
+              <option value="1">★</option>
+            </select>
+          </div>
+          <div class="col-md-7"><input class="form-control" name="comment" placeholder="Votre commentaire" required></div>
+          <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Envoyer</button></div>
+        </form>
+        <div id="reviewMsg" class="mt-2"></div>
+        <div class="mt-3">
+          <h6>Mes avis</h6>
+          <ul id="myReviews" class="list-group"></ul>
+        </div>
+      </div>
+      <div id="userDocs" class="mt-5"></div>
+    </div>
+  </div>
+</div>
+<style>
+.animate-fadein { animation: fadein 1.2s; }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+#becomeLivreurSection .btn-warning { background: linear-gradient(90deg,#f7b731,#f5cd79); border: none; color: #222; }
+#becomeLivreurSection .btn-warning:hover { background: linear-gradient(90deg,#f5cd79,#f7b731); color: #111; }
+#docUploadForm { border: 1px solid #eee; }
+</style>
+<script>
+async function loadMe() {
+  const res = await fetch('https://api.axia.quest/api/auth/me', { credentials: 'include' });
+  const data = await res.json();
+  console.log('Données utilisateur reçues:', data.user);
+  console.log('first_name:', data.user?.first_name, 'type:', typeof data.user?.first_name);
+  console.log('last_name:', data.user?.last_name, 'type:', typeof data.user?.last_name);
+  const ui = document.getElementById('userInfo');
+  
+  if (data.user) { 
+    // Construire le nom complet en utilisant first_name et last_name
+    let fullName = '';
+    if (data.user.first_name && data.user.first_name.trim() && data.user.last_name && data.user.last_name.trim()) {
+      fullName = `${data.user.first_name.trim()} ${data.user.last_name.trim()}`;
+    } else if (data.user.first_name && data.user.first_name.trim()) {
+      fullName = data.user.first_name.trim();
+    } else if (data.user.last_name && data.user.last_name.trim()) {
+      fullName = data.user.last_name.trim();
+    } else {
+      fullName = 'Nom non défini';
+    }
+    
+    // Créer une présentation en carte avec toutes les informations
+    ui.innerHTML = `
+      <div class="row text-start">
+        <div class="col-md-6 mb-3">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-person-circle text-primary me-3" style="font-size: 2rem;"></i>
+            <div>
+              <h6 class="mb-1 text-muted">Nom complet</h6>
+              <strong class="fs-5">${fullName}</strong>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-envelope text-primary me-3" style="font-size: 2rem;"></i>
+            <div>
+              <h6 class="mb-1 text-muted">Email</h6>
+              <strong class="fs-5">${data.user.email}</strong>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-shield-check text-primary me-3" style="font-size: 2rem;"></i>
+            <div>
+              <h6 class="mb-1 text-muted">Type de compte</h6>
+              <strong class="fs-5 text-capitalize">${data.user.role}</strong>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-wallet2 text-primary me-3" style="font-size: 2rem;"></i>
+            <div>
+              <h6 class="mb-1 text-muted">Solde actuel</h6>
+              <strong class="fs-5 text-success">€ ${(data.user.balance_cents/100).toFixed(2)}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    if (data.user.role === 'client') {
+      document.getElementById('becomeFranchiseSection').style.display='block';
+    }
+    
+    // Afficher la section solde et retraits uniquement pour les franchisés
+    if (data.user.role === 'franchise') {
+      document.getElementById('balanceSection').style.display='block';
+    }
+  } else {
+    ui.innerHTML = '<div class="text-center"><i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i><p class="mt-2">Non connecté</p></div>';
+  }
+  
+  document.getElementById('balanceInfo').innerText = data.user ? `Solde: € ${(data.user.balance_cents/100).toFixed(2)}` : '';
+}
+async function loadPayouts() {
+  // Ne charger les retraits que si la section est visible (utilisateur franchisé)
+  const balanceSection = document.getElementById('balanceSection');
+  if (balanceSection.style.display === 'none') {
+    return;
+  }
+  
+  const res = await fetch('https://api.axia.quest/api/payouts/me', { credentials: 'include' });
+  const list = document.getElementById('payoutHistory');
+  if (!res.ok) { list.innerHTML = '<li class="list-group-item">-</li>'; return; }
+  const rows = await res.json();
+  list.innerHTML = rows.map(p=>`<li class="list-group-item d-flex justify-content-between"><span>${p.iban}</span><span>${(p.amount_cents/100).toFixed(2)}€</span><span>${p.status}</span></li>`).join('');
+}
+
+async function checkFranchiseApplication() {
+  try {
+    const res = await fetch('https://api.axia.quest/api/franchises/my-application', { credentials: 'include' });
+    if (res.ok) {
+      const application = await res.json();
+      if (application && application.status) {
+        // L'utilisateur a déjà une candidature
+        // Désactiver le bouton
+        const franchiseBtn = document.getElementById('showFranchiseModal');
+        franchiseBtn.disabled = true;
+        franchiseBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Candidature envoyée';
+        franchiseBtn.className = 'btn btn-secondary mb-3 px-4 py-2 fw-bold animate-fadein';
+        
+        // Afficher le suivi
+        document.getElementById('franchiseStatusSection').style.display = 'block';
+        document.getElementById('franchiseStatus').textContent = application.status === 'pending' ? 'En attente de validation' : application.status;
+        document.getElementById('franchiseSiret').textContent = application.siret || '-';
+        document.getElementById('franchiseTva').textContent = application.tva || '-';
+        document.getElementById('franchiseDate').textContent = application.created_at ? new Date(application.created_at).toLocaleDateString('fr-FR') : '-';
+      }
+    }
+  } catch (error) {
+    console.log('Pas de candidature en cours ou erreur de vérification');
+  }
+}
+document.addEventListener('DOMContentLoaded', async ()=>{
+  await loadMe();
+  await loadPayouts();
+  await checkFranchiseApplication();
+  document.getElementById('showFranchiseModal').addEventListener('click', ()=>{
+    new bootstrap.Modal(document.getElementById('franchiseModal')).show();
+  });
+  document.getElementById('franchiseForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    
+    try {
+      const res = await fetch('https://api.axia.quest/api/franchises/apply', { method: 'POST', body: fd, credentials: 'include' });
+      const out = await res.json();
+      
+      if (res.ok) {
+        // Candidature réussie
+        document.getElementById('franchiseMsg').innerText = '✅ Candidature envoyée avec succès !';
+        document.getElementById('franchiseMsg').className = 'alert alert-success mt-2';
+        
+        // Fermer le modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('franchiseModal'));
+        if (modal) modal.hide();
+        
+        // Désactiver le bouton "Devenir franchisé"
+        const franchiseBtn = document.getElementById('showFranchiseModal');
+        franchiseBtn.disabled = true;
+        franchiseBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Candidature envoyée';
+        franchiseBtn.className = 'btn btn-secondary mb-3 px-4 py-2 fw-bold animate-fadein';
+        
+        // Afficher le suivi de dossier
+        document.getElementById('franchiseStatusSection').style.display = 'block';
+        
+        // Remplir les informations du suivi
+        document.getElementById('franchiseSiret').textContent = fd.get('siret');
+        document.getElementById('franchiseTva').textContent = fd.get('tva');
+        document.getElementById('franchiseDate').textContent = new Date().toLocaleDateString('fr-FR');
+        
+        // Réinitialiser le formulaire
+        e.target.reset();
+        // Remettre l'IBAN par défaut
+        e.target.iban.value = 'FR7630001007941234567890185';
+        
+        // Recharger les informations utilisateur
+        await loadMe();
+        
+      } else {
+        // Erreur
+        document.getElementById('franchiseMsg').innerText = '❌ ' + (out.error || 'Erreur lors de l\'envoi');
+        document.getElementById('franchiseMsg').className = 'alert alert-danger mt-2';
+      }
+    } catch (error) {
+      document.getElementById('franchiseMsg').innerText = '❌ Erreur réseau';
+      document.getElementById('franchiseMsg').className = 'alert alert-danger mt-2';
+    }
+  });
+  // Gestion du formulaire de retrait (uniquement pour les franchisés)
+  const payoutForm = document.getElementById('payoutForm');
+  if (payoutForm) {
+    payoutForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const iban = e.target.iban.value;
+      const amount_cents = Math.round(Number(e.target.amount.value)*100);
+      const res = await fetch('https://api.axia.quest/api/payouts/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ iban, amount_cents }) });
+      const out = await res.json();
+      document.getElementById('payoutMsg').innerText = res.ok ? out.message : (out.error||'Erreur');
+      await loadMe();
+      await loadPayouts();
+    });
+  }
+
+  // Newsletter opt-in toggle 
+  const meRes = await fetch('https://api.axia.quest/api/auth/me', { credentials: 'include' });
+  const me = await meRes.json();
+  const opt = document.getElementById('optin');
+  if (me.user) opt.checked = !!me.user.newsletter_optin;
+  opt.addEventListener('change', async ()=>{
+    await fetch('https://api.axia.quest/api/users/me', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ newsletter_optin: opt.checked ? 1 : 0 }) });
+  });
+
+  // Reviews
+  async function loadMyReviews(){
+    const res = await fetch('https://api.axia.quest/api/reviews/me', { credentials: 'include' });
+    if (!res.ok) return;
+    const rows = await res.json();
+    document.getElementById('myReviews').innerHTML = rows.map(r=>`<li class="list-group-item d-flex justify-content-between"><span>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span><span>${r.comment}</span><span>${r.status}</span></li>`).join('');
+    
+    // Vérifier s'il y a déjà un avis (peu importe le statut)
+    const hasExistingReview = rows.length > 0;
+    const reviewForm = document.getElementById('reviewForm');
+    const reviewMsg = document.getElementById('reviewMsg');
+    
+    if (hasExistingReview) {
+      // Désactiver le formulaire et afficher un message
+      reviewForm.style.opacity = '0.6';
+      reviewForm.style.pointerEvents = 'none';
+      reviewMsg.innerHTML = '<div class="alert alert-info mt-2"><i class="bi bi-info-circle me-2"></i>Vous avez déjà soumis un avis. Vous ne pouvez pas en soumettre un nouveau.</div>';
+    } else {
+      // Réactiver le formulaire
+      reviewForm.style.opacity = '1';
+      reviewForm.style.pointerEvents = 'auto';
+      reviewMsg.innerHTML = '';
+    }
+  }
+  await loadMyReviews();
+  document.getElementById('reviewForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const form = e.target;
+    const payload = { rating: Number(form.rating.value), comment: form.comment.value };
+    const res = await fetch('https://api.axia.quest/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(payload) });
+    const out = await res.json();
+    document.getElementById('reviewMsg').innerText = res.ok ? 'Avis envoyé, en attente de validation.' : (out.error||'Erreur');
+    form.reset();
+    await loadMyReviews();
+  });
+});
+</script>

@@ -1,0 +1,17 @@
+{
+  "name": "projet_annuel_root",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:front\" \"npm:dev:back\"",
+    "postinstall": "npm --prefix api install && npm --prefix mpa-frontoffice install && npm --prefix spa-backoffice install",
+    "dev:api": "npm --prefix api run dev",
+    "dev:front": "npm --prefix mpa-frontoffice run dev",
+    "dev:back": "npm --prefix spa-backoffice run serve"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "nodemailer": "^7.0.5"
+  }
+}

@@ -1,0 +1,84 @@
+<div class="container-fluid p-0">
+  <div id="map" style="height: 80vh; width: 100%"></div>
+</div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async ()=>{
+  const map = L.map('map').setView([48.8566, 2.3522], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  // Récupérer le profil pour déterminer le rôle
+  let role = 'guest';
+  try {
+    const me = await fetch('https://api.axia.quest/api/auth/me', { credentials: 'include' });
+    if (me.ok) {
+      const meJson = await me.json();
+      role = meJson?.user?.role || 'client';
+    }
+  } catch(e) {}
+
+  // Préparer les icônes personnalisées
+  const truckIconBase = L.icon({
+    iconUrl: '/foodtruck.png',
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -12]
+  });
+  const iconWithBg = (bgColor)=> L.divIcon({
+    html: `<div style="background:${bgColor}B3;border-radius:50%;padding:4px;display:flex;align-items:center;justify-content:center;border:0.5px solid rgba(0,0,0,.15)"><img src="/foodtruck.png" width="28" height="28"/></div>`,
+    className: '',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+  });
+  const icons = {
+    client: iconWithBg('#ffffff'),
+    mine: iconWithBg('#28a745'),
+    others: iconWithBg('#fd7e14'),
+    warehouse: L.divIcon({
+      html: `<div style="background:#0d6efdB3;border-radius:50%;padding:4px;border:0.5px solid rgba(0,0,0,.15)"><span style="display:inline-block;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:16px solid #fff"></span></div>`,
+      className: '', iconSize: [32, 32], iconAnchor: [16, 16]
+    })
+  };
+
+  // Charger les données selon le rôle
+  let trucks = [], warehouses = [], myId = null;
+  if (role === 'franchisé' || role === 'ADMIN') {
+    const meFull = await fetch('https://api.axia.quest/api/users/me', { credentials: 'include' });
+    if (meFull.ok) { const j = await meFull.json(); myId = j.id || j.user?.id; }
+    const res = await fetch('https://api.axia.quest/api/map/franchise', { credentials: 'include' });
+    const data = await res.json();
+    trucks = data.trucks || []; warehouses = data.warehouses || [];
+  } else {
+    const res = await fetch('https://api.axia.quest/api/map/public');
+    const data = await res.json();
+    trucks = data.trucks || [];
+  }
+
+  // Affichage des camions
+  trucks.forEach(t=>{
+    if (!t.lat || !t.lng) return;
+    let icon = icons.client;
+    if (role === 'franchisé' || role === 'ADMIN') {
+      if (t.franchisee_user_id && myId && t.franchisee_user_id === myId) icon = icons.mine; else icon = icons.others;
+    }
+    const m = L.marker([t.lat, t.lng], { icon }).addTo(map);
+    const popup = `<div style="min-width:180px">
+      <b>${t.name || 'Foodtruck'}</b><br/>
+      ${t.address ? `<small>${t.address}</small><br/>` : ''}
+      <a href="/menu?truck=${t.id}" class="btn btn-sm btn-success mt-2" style="color: white !important;">Passer commande</a>
+    </div>`;
+    m.bindPopup(popup);
+  });
+
+  // Affichage des entrepôts pour franchisés/admin
+  if (warehouses && warehouses.length) {
+    warehouses.forEach(w=>{
+      if (!w.lat || !w.lng) return;
+      const m = L.marker([w.lat, w.lng], { icon: icons.warehouse }).addTo(map);
+      m.bindPopup(`<b>${w.name}</b>${w.address?`<br/><small>${w.address}</small>`:''}`);
+    });
+  }
+});
+</script>
+
+

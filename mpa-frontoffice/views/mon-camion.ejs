@@ -1,0 +1,135 @@
+<div class="container py-4">
+  <h2 class="mb-4">Mon camion</h2>
+  <div id="truckSection">
+    <div class="mb-3">
+      <label class="form-label">Réserver un camion disponible</label>
+      <div class="d-flex gap-2">
+        <select id="availableTrucks" class="form-select" style="max-width:360px"></select>
+        <button id="reserveBtn" class="btn btn-success">Réserver</button>
+      </div>
+      <div id="reserveMsg" class="mt-2"></div>
+    </div>
+
+    <div id="myTruck" class="card d-none">
+      <div class="card-body">
+        <h5 class="card-title">Camion attribué: <span id="truckName"></span></h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Latitude</label>
+            <input type="number" step="any" id="lat" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Longitude</label>
+            <input type="number" step="any" id="lng" class="form-control">
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button id="updateLocBtn" class="btn btn-primary w-100">Mettre à jour la position</button>
+          </div>
+        </div>
+        <hr>
+        <h6>Déclarer un incident</h6>
+        <div class="row g-2">
+          <div class="col-md-3">
+            <select id="incidentType" class="form-select">
+              <option value="panne">Panne</option>
+              <option value="entretien">Entretien</option>
+              <option value="reparation">Réparation</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <input id="incidentTitle" class="form-control" placeholder="Titre">
+          </div>
+          <div class="col-md-5">
+            <input id="incidentDesc" class="form-control" placeholder="Description (optionnelle)">
+          </div>
+          <div class="col-12">
+            <button id="reportIncidentBtn" class="btn btn-warning mt-2">Déclarer</button>
+          </div>
+        </div>
+        <hr>
+        <button id="releaseBtn" class="btn btn-outline-danger">Rendre le camion</button>
+        <div id="truckMsg" class="mt-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const api = 'https://api.axia.quest';
+  async function fetchJSON(url, opts={}){
+    const res = await fetch(url, Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts));
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) throw new Error(data.error || 'Erreur réseau');
+    return data;
+  }
+  async function load(){
+    const me = await fetchJSON(api + '/api/auth/me');
+    if (!me.user || me.user.role !== 'franchisé') { window.location.href = '/'; return; }
+    const all = await (await fetch(api + '/api/trucks')).json();
+    const mine = all.find(t=>t.franchisee_user_id === me.user.id);
+    const select = document.getElementById('availableTrucks');
+    const avail = all.filter(t=>!t.franchisee_user_id);
+    select.innerHTML = avail.length ? avail.map(t=>`<option value="${t.id}">${t.name}</option>`).join('') : '<option value="">Aucun camion disponible</option>';
+    const myTruckCard = document.getElementById('myTruck');
+    if (mine){
+      myTruckCard.classList.remove('d-none');
+      document.getElementById('truckName').innerText = mine.name;
+      document.getElementById('lat').value = mine.lat || '';
+      document.getElementById('lng').value = mine.lng || '';
+      myTruckCard.dataset.id = mine.id;
+    } else {
+      myTruckCard.classList.add('d-none');
+      delete myTruckCard.dataset.id;
+    }
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    load();
+    document.getElementById('reserveBtn').addEventListener('click', async ()=>{
+      const id = document.getElementById('availableTrucks').value;
+      if (!id) { document.getElementById('reserveMsg').innerText = 'Aucun camion disponible'; return; }
+      try {
+        await fetchJSON(api + '/api/trucks/' + id + '/reserve', { method:'POST' });
+        document.getElementById('reserveMsg').innerText = 'Camion réservé !';
+        load();
+      } catch(e){ document.getElementById('reserveMsg').innerText = e.message; }
+    });
+    document.getElementById('updateLocBtn').addEventListener('click', async ()=>{
+      const card = document.getElementById('myTruck');
+      const id = card.dataset.id;
+      const lat = parseFloat(document.getElementById('lat').value);
+      const lng = parseFloat(document.getElementById('lng').value);
+      if (!id || isNaN(lat) || isNaN(lng)) { document.getElementById('truckMsg').innerText = 'Coordonnées invalides'; return; }
+      try {
+        await fetchJSON(api + '/api/trucks/' + id + '/location', { method:'POST', body: JSON.stringify({ lat, lng }) });
+        document.getElementById('truckMsg').innerText = 'Position mise à jour';
+      } catch(e){ document.getElementById('truckMsg').innerText = e.message; }
+    });
+    document.getElementById('reportIncidentBtn').addEventListener('click', async ()=>{
+      const card = document.getElementById('myTruck');
+      const id = card.dataset.id;
+      const type = document.getElementById('incidentType').value;
+      const title = document.getElementById('incidentTitle').value.trim();
+      const description = document.getElementById('incidentDesc').value.trim();
+      if (!id || !type || !title) { document.getElementById('truckMsg').innerText = 'Type et titre requis'; return; }
+      try {
+        await fetchJSON(api + '/api/incidents', { method:'POST', body: JSON.stringify({ truck_id: Number(id), type, title, description }) });
+        document.getElementById('truckMsg').innerText = 'Incident déclaré';
+        document.getElementById('incidentTitle').value = '';
+        document.getElementById('incidentDesc').value = '';
+      } catch(e){ document.getElementById('truckMsg').innerText = e.message; }
+    });
+    document.getElementById('releaseBtn').addEventListener('click', async ()=>{
+      const card = document.getElementById('myTruck');
+      const id = card.dataset.id;
+      if (!id) return;
+      try {
+        await fetchJSON(api + '/api/trucks/' + id + '/release', { method:'POST' });
+        document.getElementById('truckMsg').innerText = 'Camion rendu';
+        load();
+      } catch(e){ document.getElementById('truckMsg').innerText = e.message; }
+    });
+  });
+})();
+</script>
+
+
