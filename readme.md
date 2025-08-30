@@ -5,7 +5,7 @@
 
 Application de gestion de food trucks avec système de commandes en ligne, gestion des franchisés et back-office administratif.
 
-## 🏗️ Architecture
+## Architecture
 
 Le projet est divisé en 3 composants principaux :
 
@@ -13,7 +13,7 @@ Le projet est divisé en 3 composants principaux :
 - **Front-Office** (Port 4000) : Interface client EJS + Bootstrap
 - **Back-Office** (Port 5000) : Administration Vue.js
 
-## 🚀 Installation
+## Installation
 
 ### Prérequis
 - Node.js 18+ 
@@ -168,7 +168,7 @@ projetAnnuel/
 - Système de commandes avec panier
 - Carte interactive des food trucks
 - Système de fidélité et points
-- Interface multilingue (FR/EN/ES)
+- Interface multilingue (FR/EN)
 
 ### Back-Office  
 - Gestion des franchisés
@@ -191,18 +191,6 @@ projetAnnuel/
 - Schémas de requêtes/réponses
 - Tests interactifs
 
-## 🧪 Tests
-
-```bash
-# Tests unitaires
-npm test
-
-# Tests d'intégration  
-npm run test:integration
-
-# Tests de charge
-npm run test:load
-```
 
 ## 🚀 Déploiement
 
