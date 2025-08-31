@@ -68,10 +68,16 @@
   async function load(){
     const me = await fetchJSON(api + '/api/auth/me');
     if (!me.user || me.user.role !== 'franchisé') { window.location.href = '/'; return; }
-    const all = await (await fetch(api + '/api/trucks')).json();
+    const all = await (await fetch(api + '/api/trucks', { credentials:'include' })).json();
     const mine = all.find(t=>t.franchisee_user_id === me.user.id);
     const select = document.getElementById('availableTrucks');
-    const avail = all.filter(t=>!t.franchisee_user_id);
+    let avail = [];
+    try {
+      avail = await fetchJSON(api + '/api/trucks/available');
+    } catch(e) {
+      // fallback si indisponible
+      avail = all.filter(t=>!t.franchisee_user_id && t.active === 1);
+    }
     select.innerHTML = avail.length ? avail.map(t=>`<option value="${t.id}">${t.name}</option>`).join('') : '<option value="">Aucun camion disponible</option>';
     const myTruckCard = document.getElementById('myTruck');
     if (mine){

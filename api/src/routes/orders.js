@@ -11,7 +11,7 @@ router.get('/franchise/me', ensureAuth, async (req, res) => {
     const { all } = require('../utils/db');
     // Commandes des camions dont il est franchisee_user_id
     const rows = await all(`
-      SELECT o.* FROM orders o
+      SELECT o.*, t.name AS truck_name, t.address AS truck_address FROM orders o
       JOIN trucks t ON t.id = o.truck_id
       WHERE t.franchisee_user_id = ?
       ORDER BY o.created_at DESC
@@ -34,7 +34,18 @@ router.put('/:id/status', ensureAuth, async (req, res) => {
     const allowed = ['pending', 'ready', 'completed'];
     const next = String(req.body.status || '').toLowerCase();
     if (!allowed.includes(next)) return res.status(400).json({ error: 'Statut invalide' });
-    await run('UPDATE orders SET status = ? WHERE id = ?', [next, req.params.id]);
+
+    // Déterminer colonnes de timestamp à mettre à jour (sans pending_at)
+    let tsColumn = null;
+    if (next === 'ready') tsColumn = 'ready_at';
+    if (next === 'completed') tsColumn = 'completed_at';
+
+    if (tsColumn) {
+      await run(`UPDATE orders SET status = ?, ${tsColumn} = COALESCE(${tsColumn}, CURRENT_TIMESTAMP) WHERE id = ?`, [next, req.params.id]);
+    } else {
+      await run('UPDATE orders SET status = ? WHERE id = ?', [next, req.params.id]);
+    }
+
     // Transférer 20% au franchisé à la complétion
     if (next === 'completed' && truck && truck.franchisee_user_id) {
       const franchiseeId = truck.franchisee_user_id;
@@ -82,7 +93,16 @@ router.put('/:id/status', ensureAuth, async (req, res) => {
       }
     }
     
-    res.json({ ok: true });
+    // Calcul temps de préparation si possible (ready - created_at)
+    let prep_seconds = null;
+    try {
+      const updated = await get('SELECT created_at, ready_at FROM orders WHERE id = ?', [req.params.id]);
+      if (updated && updated.created_at && updated.ready_at) {
+        prep_seconds = Math.max(0, Math.floor((new Date(updated.ready_at) - new Date(updated.created_at)) / 1000));
+      }
+    } catch (_) {}
+    
+    res.json({ ok: true, prep_seconds });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

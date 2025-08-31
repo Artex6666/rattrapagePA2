@@ -2,8 +2,14 @@
   <h2 class="mb-3">Mes ordres</h2>
   <div class="card">
     <div class="card-body">
-      <h5 class="card-title">Commandes à préparer</h5>
+      <h5 class="card-title">Ordres actifs</h5>
       <div id="ordersToPrepare"></div>
+    </div>
+  </div>
+  <div class="card mt-4">
+    <div class="card-body">
+      <h5 class="card-title">Historique des ordres</h5>
+      <div id="ordersHistory"></div>
     </div>
   </div>
 </div>
@@ -13,6 +19,7 @@
     const res = await fetch('https://api.axia.quest/api/orders/franchise/me', { credentials:'include' });
     const rows = await res.json();
     const pendings = rows.filter(o => o.status === 'pending' || o.status === 'ready');
+    const hist = rows.filter(o => o.status === 'completed');
     const render = (list)=> list.length ? `<div class="list-group">
       ${list.map(o=>{
         const items = (()=>{ try { return JSON.parse(o.items_json||'[]'); } catch(e){ return []; }})();
@@ -34,6 +41,24 @@
       }).join('')}
     </div>` : '<div class="text-muted">Aucune commande en attente.</div>';
     document.getElementById('ordersToPrepare').innerHTML = render(pendings);
+    const renderHist = (list)=> list.length ? `<div class="list-group">
+      ${list.map(o=>{
+        const items = (()=>{ try { return JSON.parse(o.items_json||'[]'); } catch(e){ return []; }})();
+        return `<div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold">Commande #${o.id} - ${(o.total_cents/100).toFixed(2)}€</div>
+              <div class="text-muted small">${new Date(o.created_at).toLocaleString('fr-FR')} • ${o.status}</div>
+            </div>
+            <span class="badge bg-secondary">${o.status}</span>
+          </div>
+          <div class="mt-2 small text-muted border-start ps-2">
+            ${items.map(it=>`${it.qty} × ${it.name}`).join(' • ') || '-'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : '<div class="text-muted">Aucun historique.</div>';
+    document.getElementById('ordersHistory').innerHTML = renderHist(hist);
   }
   async function updateStatus(id, status){
     const badge = document.createElement('div');

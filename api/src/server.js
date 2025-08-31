@@ -107,6 +107,49 @@ app.get('/api/stats', ensureAuth, (req, res, next) => {
   }
 });
 
+app.get('/api/stats/prep-times', ensureAuth, (req, res, next) => {
+  if (req.user.role === 'ADMIN' || req.user.role === 'administrateur') return next();
+  return res.status(403).json({ error: 'Accès réservé aux administrateurs' });
+}, async (req, res) => {
+  try {
+    const { all } = require('./utils/db');
+    const rows = await all(`
+      SELECT o.id, o.created_at, o.ready_at, o.completed_at, o.status,
+             o.total_cents, o.truck_id, t.name AS truck_name,
+             CAST((julianday(o.ready_at) - julianday(o.created_at)) * 24 * 60 * 60 AS INTEGER) AS prep_seconds
+      FROM orders o
+      LEFT JOIN trucks t ON t.id = o.truck_id
+      WHERE o.ready_at IS NOT NULL AND o.created_at IS NOT NULL
+      ORDER BY o.ready_at DESC
+    `);
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Alias avec slash pour compat
+app.get('/api/stats/prep/times', ensureAuth, (req, res, next) => {
+  if (req.user.role === 'ADMIN' || req.user.role === 'administrateur') return next();
+  return res.status(403).json({ error: 'Accès réservé aux administrateurs' });
+}, async (req, res) => {
+  try {
+    const { all } = require('./utils/db');
+    const rows = await all(`
+      SELECT o.id, o.created_at, o.ready_at, o.completed_at, o.status,
+             o.total_cents, o.truck_id, t.name AS truck_name,
+             CAST((julianday(o.ready_at) - julianday(o.created_at)) * 24 * 60 * 60 AS INTEGER) AS prep_seconds
+      FROM orders o
+      LEFT JOIN trucks t ON t.id = o.truck_id
+      WHERE o.ready_at IS NOT NULL AND o.created_at IS NOT NULL
+      ORDER BY o.ready_at DESC
+    `);
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 // Boot

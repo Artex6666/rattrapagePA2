@@ -5,6 +5,15 @@ async function getLoyaltyConfig() {
 }
 
 async function createOrder({ userId, truckId, items, useReward, menuPack, menuPackQty }) {
+  // Valider le camion: obligatoire et doit avoir un franchisé
+  const truck = await get('SELECT franchisee_user_id, active FROM trucks WHERE id = ?', [truckId]);
+  if (!truck || !truck.active) {
+    throw new Error('Camion introuvable ou inactif');
+  }
+  if (!truck.franchisee_user_id) {
+    throw new Error('Ce camion n\'a pas de franchisé assigné');
+  }
+
   let totalCents = items.reduce((sum, item) => sum + (item.price_cents * item.qty), 0);
   // Appliquer l'offre menu 15€: remplacer N trios plat+boisson+dessert par N*1500
   const triosRequested = Number(menuPackQty || (menuPack ? 1 : 0)) || 0;
@@ -57,7 +66,13 @@ async function createOrder({ userId, truckId, items, useReward, menuPack, menuPa
 }
 
 async function listMyOrders(userId) {
-  const rows = await all('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', [userId]);
+  const rows = await all(`
+    SELECT o.*, t.name AS truck_name, t.address AS truck_address
+    FROM orders o
+    LEFT JOIN trucks t ON t.id = o.truck_id
+    WHERE o.user_id = ?
+    ORDER BY o.created_at DESC
+  `, [userId]);
   return rows.map(r => ({ ...r, items: JSON.parse(r.items_json) }));
 }
 

@@ -3,7 +3,7 @@ const { all } = require('../utils/db');
 const router = express.Router();
 
 router.get('/public', async (req, res) => {
-  const trucks = await all('SELECT id, name, lat, lng FROM trucks WHERE active = 1 AND lat IS NOT NULL AND lng IS NOT NULL');
+  const trucks = await all('SELECT id, name, lat, lng FROM trucks WHERE active = 1 AND franchisee_user_id IS NOT NULL AND lat IS NOT NULL AND lng IS NOT NULL');
   res.json({ trucks });
 });
 

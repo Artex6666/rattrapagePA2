@@ -2,8 +2,9 @@ const { all, get, run } = require('../utils/db');
 
 async function getTruck(id) { return await get('SELECT * FROM trucks WHERE id = ?', [id]); }
 
-async function createIncident({ truck_id, reporter_user_id, type, title, description }) {
-  const r = await run('INSERT INTO truck_incidents (truck_id, reporter_user_id, type, title, description) VALUES (?, ?, ?, ?, ?)', [truck_id, reporter_user_id, type, title, description || null]);
+async function createIncident({ truck_id, reporter_user_id, type, title, description, priority }) {
+  const p = priority || 'moyenne';
+  const r = await run('INSERT INTO truck_incidents (truck_id, reporter_user_id, type, title, description, priority) VALUES (?, ?, ?, ?, ?, ?)', [truck_id, reporter_user_id, type, title, description || null, p]);
   return r.lastID;
 }
 
@@ -33,10 +34,16 @@ async function listIncidentsForFranchise(userId) {
   );
 }
 
-async function updateIncident(id, { status, title, description, resolved }) {
+async function updateIncident(id, { status, title, description, priority, resolved }) {
   const inc = await get('SELECT * FROM truck_incidents WHERE id = ?', [id]);
   if (!inc) return null;
-  await run('UPDATE truck_incidents SET status = ?, title = ?, description = ?, resolved_at = CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE resolved_at END WHERE id = ?', [status || inc.status, title || inc.title, description || inc.description, resolved ? 1 : 0, id]);
+  const newStatus = status || inc.status;
+  const newPriority = priority || inc.priority || 'moyenne';
+  await run('UPDATE truck_incidents SET status = ?, title = ?, description = ?, priority = ?, updated_at = CURRENT_TIMESTAMP, resolved_at = CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE resolved_at END WHERE id = ?', [newStatus, title || inc.title, description || inc.description, newPriority, resolved ? 1 : 0, id]);
+  // Si panne critique => désactiver le camion
+  if (inc.type === 'panne' && (newPriority === 'critique')) {
+    await run('UPDATE trucks SET active = 0 WHERE id = ?', [inc.truck_id]);
+  }
   return await get('SELECT * FROM truck_incidents WHERE id = ?', [id]);
 }
 

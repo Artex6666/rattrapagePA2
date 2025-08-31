@@ -68,6 +68,10 @@
   </div>
 </div>
 <script>
+let loyaltyCfg = null;
+let userPoints = 0;
+const MENU_PRICE_CENTS = 1500;
+const fmtEuro = (c) => (Number(c||0)/100).toFixed(2) + '€';
 async function loadTrucks() {
   const res = await fetch('https://api.axia.quest/api/trucks');
   const trucks = await res.json();
@@ -119,6 +123,8 @@ async function loadLoyalty() {
   const me = await (await fetch('https://api.axia.quest/api/auth/me', { credentials: 'include' })).json();
   const cfg = await (await fetch('https://api.axia.quest/api/loyalty/config')).json();
   const points = (me.user && me.user.loyalty_points) || 0;
+  loyaltyCfg = cfg;
+  userPoints = points;
   const pct = Math.min(100, Math.floor(points * 100 / cfg.reward_threshold_points));
   const free = cfg.reward_free_menus || 1;
   document.getElementById('loyaltyInfo').innerText = `Points: ${points} / ${cfg.reward_threshold_points} • ${free} menu offert`;
@@ -127,6 +133,7 @@ async function loadLoyalty() {
   if (useReward) {
     useReward.disabled = points < cfg.reward_threshold_points;
     useReward.checked = !useReward.disabled && useReward.checked;
+    useReward.addEventListener('change', () => { try { computeTotalPreview(); } catch(_){} });
   }
 }
 document.addEventListener('DOMContentLoaded', async ()=>{
@@ -170,10 +177,24 @@ document.addEventListener('DOMContentLoaded', async ()=>{
        const dessert = itemsSel.find(it=>it.qty>0 && isDessert(it.name));
        if (dish && drink && dessert) {
          const pairs = Math.max(0, Math.min(mpQty, Number(dish.qty)||0, Number(drink.qty)||0, Number(dessert.qty)||0));
-         if (pairs>0) total = total - ((dish.price_cents+drink.price_cents+dessert.price_cents)*pairs) + (1500*pairs);
+         if (pairs>0) total = total - ((dish.price_cents+drink.price_cents+dessert.price_cents)*pairs) + (MENU_PRICE_CENTS*pairs);
        }
      }
-    document.getElementById('orderBtn').textContent = `Payer ${(total/100).toFixed(2)}€`;
+    // Appliquer remise fidélité visuelle si éligible et demandé
+    const useRewardEl = document.getElementById('useReward');
+    const eligible = !!useRewardEl && !useRewardEl.disabled && useRewardEl.checked && loyaltyCfg && (userPoints >= (loyaltyCfg.reward_threshold_points||0));
+    let discount = 0;
+    if (eligible) {
+      const freeMenus = Math.max(0, Math.min(Number(loyaltyCfg.reward_free_menus||1), mpQty));
+      discount = freeMenus * MENU_PRICE_CENTS;
+    }
+    const finalTotal = Math.max(0, total - discount);
+    const btn = document.getElementById('orderBtn');
+    if (discount > 0) {
+      btn.innerHTML = `Payer <span class="text-muted" style="text-decoration:line-through;">${fmtEuro(total)}</span> <span>${fmtEuro(finalTotal)}</span>`;
+    } else {
+      btn.textContent = `Payer ${fmtEuro(total)}`;
+    }
     return { itemsSel, total };
   }
   document.getElementById('items').addEventListener('input', computeTotalPreview);

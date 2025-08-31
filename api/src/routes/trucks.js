@@ -4,13 +4,14 @@ const { ensureAuth, ensureRole } = require('../utils/auth');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-  const rows = await all('SELECT * FROM trucks WHERE active = 1');
+  const rows = await all('SELECT * FROM trucks WHERE active = 1 AND franchisee_user_id IS NOT NULL');
   res.json(rows);
 });
 
 router.post('/', ensureAuth, ensureRole('ADMIN'), async (req, res) => {
-  const { name, franchiseeUserId, address, lat, lng } = req.body;
-  const r = await run('INSERT INTO trucks (name, franchisee_user_id, address, lat, lng, active) VALUES (?, ?, ?, ?, ?, 1)', [name, franchiseeUserId || null, address || null, lat || null, lng || null]);
+  const { name, franchiseeUserId, address, lat, lng, active } = req.body;
+  const act = (active == null || active === '') ? 1 : Number(active);
+  const r = await run('INSERT INTO trucks (name, franchisee_user_id, address, lat, lng, active) VALUES (?, ?, ?, ?, ?, ?)', [name, franchiseeUserId || null, address || null, lat || null, lng || null, act]);
   res.status(201).json({ id: r.lastID });
 });
 
@@ -21,8 +22,10 @@ router.put('/:id', ensureAuth, async (req, res) => {
   if (!(req.user.role === 'ADMIN' || (t.franchisee_user_id && t.franchisee_user_id === req.user.id))) {
     return res.status(403).json({ error: 'Forbidden' });
   }
-  const { name, address, lat, lng, active } = req.body;
-  await run('UPDATE trucks SET name = ?, address = ?, lat = ?, lng = ?, active = ? WHERE id = ?', [name || t.name, address || null, lat || null, lng || null, active != null ? (active ? 1 : 0) : t.active, req.params.id]);
+  const { name, address, lat, lng } = req.body;
+  const activeRaw = req.body.active;
+  const nextActive = (activeRaw == null || activeRaw === '') ? t.active : Number(activeRaw);
+  await run('UPDATE trucks SET name = ?, address = ?, lat = ?, lng = ?, active = ? WHERE id = ?', [name || t.name, address || null, lat || null, lng || null, nextActive, req.params.id]);
   res.json({ ok: true });
 });
 
@@ -86,6 +89,20 @@ router.post('/:id/location', ensureAuth, async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
+});
+
+router.get('/all', ensureAuth, ensureRole('ADMIN'), async (req, res) => {
+  const rows = await all('SELECT * FROM trucks');
+  res.json(rows);
+});
+
+router.get('/available', ensureAuth, async (req, res) => {
+  // Autoriser uniquement ADMIN ou franchisés
+  if (!(req.user.role === 'ADMIN' || req.user.role === 'franchisé')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const rows = await all('SELECT * FROM trucks WHERE active = 1 AND franchisee_user_id IS NULL');
+  res.json(rows);
 });
 
 module.exports = router;

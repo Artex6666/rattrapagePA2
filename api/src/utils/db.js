@@ -74,6 +74,44 @@ async function initDb() {
   try { await run("ALTER TABLE franchise_applications ADD COLUMN phone TEXT"); } catch (e) {}
   try { await run("ALTER TABLE franchise_applications ADD COLUMN status TEXT NOT NULL DEFAULT 'en_attente'"); } catch (e) {}
   try { await run("ALTER TABLE orders ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'"); } catch (e) {}
+  try { await run("ALTER TABLE orders ADD COLUMN ready_at TEXT"); } catch (e) {}
+  try { await run("ALTER TABLE orders ADD COLUMN completed_at TEXT"); } catch (e) {}
+  // Supprimer pending_at si présent (si SQLite le permet); sinon sans gravité
+  try { await run("ALTER TABLE orders DROP COLUMN pending_at"); } catch (e) {}
+
+  // Backfill ready_at/completed_at pour anciennes commandes sans timestamps
+  try {
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmtLocal = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    const rows = await all(`SELECT id, created_at, items_json, status, ready_at, completed_at FROM orders WHERE ready_at IS NULL OR ready_at = ''`);
+    for (const r of rows) {
+      let items = [];
+      try { items = JSON.parse(r.items_json || '[]'); } catch (_) { items = []; }
+      const totalQty = Array.isArray(items) ? items.reduce((s, it) => s + (Number(it.qty)||0), 0) : 0;
+      const prepMinutes = Math.max(5, Math.min(30, 5 + (2 * totalQty)));
+      const pickupMinutes = 10;
+      const base = new Date(r.created_at);
+      const readyDate = new Date(base.getTime() + prepMinutes * 60000);
+      const completedDate = new Date(readyDate.getTime() + pickupMinutes * 60000);
+      await run('UPDATE orders SET ready_at = ? WHERE id = ?', [fmtLocal(readyDate), r.id]);
+      if (String(r.status) === 'completed' && !r.completed_at) {
+        await run('UPDATE orders SET completed_at = ? WHERE id = ?', [fmtLocal(completedDate), r.id]);
+      }
+    }
+    // Corriger les enregistrements avec un ready_at antérieur au created_at
+    const negs = await all(`SELECT id, created_at, items_json, status FROM orders WHERE ready_at IS NOT NULL AND julianday(ready_at) < julianday(created_at)`);
+    for (const r of negs) {
+      let items = [];
+      try { items = JSON.parse(r.items_json || '[]'); } catch (_) { items = []; }
+      const totalQty = Array.isArray(items) ? items.reduce((s, it) => s + (Number(it.qty)||0), 0) : 0;
+      const prepMinutes = Math.max(5, Math.min(30, 5 + (2 * totalQty)));
+      const pickupMinutes = 10;
+      const base = new Date(r.created_at);
+      const readyDate = new Date(base.getTime() + prepMinutes * 60000);
+      const completedDate = new Date(readyDate.getTime() + pickupMinutes * 60000);
+      await run('UPDATE orders SET ready_at = ?, completed_at = CASE WHEN status = "completed" THEN ? ELSE completed_at END WHERE id = ?', [fmtLocal(readyDate), fmtLocal(completedDate), r.id]);
+    }
+  } catch (e) { /* noop */ }
 
   await run(`CREATE TABLE IF NOT EXISTS warehouses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,6 +144,8 @@ async function initDb() {
     used_reward INTEGER NOT NULL DEFAULT 0,
     loyalty_points_earned INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    ready_at TEXT,
+    completed_at TEXT,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY(truck_id) REFERENCES trucks(id) ON DELETE SET NULL
   );`);
@@ -119,7 +159,9 @@ async function initDb() {
     title TEXT NOT NULL,
     description TEXT,
     status TEXT NOT NULL DEFAULT 'open', -- open|in_progress|resolved
+    priority TEXT NOT NULL DEFAULT 'moyenne', -- basse|moyenne|haute|critique
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT,
     resolved_at TEXT,
     FOREIGN KEY(truck_id) REFERENCES trucks(id) ON DELETE CASCADE,
     FOREIGN KEY(reporter_user_id) REFERENCES users(id) ON DELETE CASCADE
